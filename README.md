@@ -86,10 +86,25 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 
 ### Teknologiat
 - React Native (cross-platform)
-- (Suositus) Expo
-- TypeScript *(suositus)*
-- Reaaliaikainen backend: esim. Firebase Firestore / Supabase Realtime *(valitkaa ja päivittäkää tähän)*
-- Kartta/paikkatieto: esim. Expo Location + Places API *(valitkaa)*
+- Expo
+- TypeScript
+- Reaaliaikainen backend: esim. Firebase Firestore
+- Kartta/paikkatieto: esim. Expo Location + Places API
+- 
+---
 
-### Ehdotettu rakenne (esimerkki)
+## Käyttöönotto
+
+### Esivaatimukset
+- Node.js (LTS)
+- Git
+- Expo Go puhelimeen testaukseen
+
+### Asennus
+```bash
+git clone <repo-url>
+cd <repo>
+npm install
+
+
 
