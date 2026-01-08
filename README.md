@@ -48,7 +48,12 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 - Valittavissa kauppaketju / kauppatyyppi *(selvitetään)*
 - Avataan reitti karttasovellukseen
 
-### 6) Perustoiminnot (CRUD)
+### 6) Offline-tuki (MVP+)
+- Sovellus näyttää **viimeisimmän synkatun** kauppalapun, vaikka internet-yhteys katkeaa
+- Käyttöliittymä näyttää yhteyden/synkkauksen tilan: **Synkattu / Synkronoidaan / Offline**
+- *(Valinnainen laajennus)* Offline-muutokset jonoutetaan ja synkataan automaattisesti, kun yhteys palautuu
+
+### 7) Perustoiminnot (CRUD)
 - Luo / lue / päivitä / poista:
   - kauppalistat
   - kategoriat
@@ -68,6 +73,7 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 | CRUD-toiminnot | Listat, kategoriat, tuotteet | Lisää/Muokkaa/Poista -toiminnot |
 | Selkeä UI/UX ja käytettävyys | Kategoriat, nopea lisäys, selkeä listaus | Kotinäkymä + listanäkymä |
 | Laitteen ominaisuuden hyödyntäminen | GPS-sijainti “lähin kauppa” -hakuun | Sijaintilupa + hakutoiminto |
+| Toimii heikossa verkossa / offline | Näyttää viimeisimmän synkatun datan offline-tilassa (välimuisti) | Demo: katkaise netti → lista näkyy edelleen |
 | Tietosuoja huomioitu | Sijaintia käytetään vain pyydettäessä, minimidatan periaate | Tietosuojasivu + lupatekstit |
 | Dokumentointi | README + (valinnainen) arkkitehtuuri/diagr. | Tämä README |
 | Versiohallinta ja työnjako | Git, branchit, PR:t, issue-tracking | GitHub/GitLab |
@@ -105,6 +111,7 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 git clone <repo-url>
 cd <repo>
 npm install
+
 
 
 
