@@ -24,29 +24,29 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 ## Ominaisuudet
 
 ### 1) Ryhmät ja yhteiskäyttö
-- Ryhmän luonti / liittyminen (esim. kutsulinkki tai koodi) *(muokkaa toteutustapa)*
+- Ryhmän luonti / liittyminen (esim. kutsulinkki tai koodi) *(tätä muokataan vielä)*
 - Ryhmän jäsenet näkevät samat kauppalistat
-- Roolit (esim. owner/member) *(valinnainen)*
+- Roolit (esim. owner/member) *(mahdollisesti?)*
 
 ### 2) Useat kauppalistat eri kaupoille
 - Ryhmä voi luoda useita kauppalappuja (esim. “Prisma”, “K-Citymarket”, “Lidl”)
 - Listakohtainen sisältö ja järjestys
-- Listojen nimeäminen ja arkistointi *(valinnainen)*
+- Listojen nimeäminen ja arkistointi *(Jos jää aikaa)*
 
 ### 3) Tuotteet tuotekategorioittain + siirrettävät kategoriat
-- Tuotteen lisääminen: nimi, määrä, lisätiedot *(valinnainen)*
+- Tuotteen lisääminen: nimi, määrä, lisätiedot(?)
 - Kategoriat (esim. Hedelmät, Maitotuotteet, Pakasteet…)
 - Kategorioiden järjestyksen muokkaus drag & drop (siirrettävä “fyysisen lapun” tapaan)
-- Tuotteiden siirtäminen kategorian sisällä / kategorioiden välillä *(valinnainen)*
+- Tuotteiden siirtäminen kategorian sisällä / kategorioiden välillä *(Jos jää aikaa)*
 
 ### 4) Reaaliaikainen päivittyminen
 - Kun yksi käyttäjä lisää/muokkaa/poistaa, muut näkevät muutokset reaaliajassa
-- Konfliktien minimointi (last-write-wins tms.) *(muokkaa)*
+- Konfliktien minimointi (last-write-wins tms.) *(selvitetään)*
 
 ### 5) GPS: lähimmän halutun kaupan haku
 - “Etsi lähin kauppa” -toiminto sijainnin perusteella
-- Valittavissa kauppaketju / kauppatyyppi *(muokkaa)*
-- Avataan reitti karttasovellukseen *(valinnainen)*
+- Valittavissa kauppaketju / kauppatyyppi *(selvitetään)*
+- Avataan reitti karttasovellukseen
 
 ### 6) Perustoiminnot (CRUD)
 - Luo / lue / päivitä / poista:
@@ -92,3 +92,4 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 - Kartta/paikkatieto: esim. Expo Location + Places API *(valitkaa)*
 
 ### Ehdotettu rakenne (esimerkki)
+
