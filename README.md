@@ -63,7 +63,6 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 
 ## Projektin vaatimukset ja miten ne täyttyvät
 
-> **Huom:** Alla on yleinen kouluprojektin vaatimusrunko. Vaihtakaa vasemman sarakkeen vaatimukset täsmälleen kurssin/tehtävänannon mukaisiksi.
 
 | Vaatimus (muokkaa) | Miten toteutuu tässä projektissa | Missä näkyy / esimerkki |
 |---|---|---|
@@ -111,6 +110,7 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 git clone <repo-url>
 cd <repo>
 npm install
+
 
 
 
