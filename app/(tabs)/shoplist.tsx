@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   // Otsikon teksti
   headerTitle: { fontSize: 24, fontWeight: 'bold', flex: 1 },
   // Plus-nappi uuden listan luontiin
-  addButton: { backgroundColor: '#2196F3', borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  addButton: { backgroundColor: '#7ed957', borderRadius: 20, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   // Plus-napin teksti
   addButtonText: { color: 'white', fontSize: 28, fontWeight: 'bold', marginTop: -2 },
   // Listan nimi (etusivulla)
@@ -245,7 +245,7 @@ listBlock: {
   // Sulkunapin teksti (rasti)
   closeButtonText: { fontSize: 28, color: '#888' },
   // "Lisää ostos" -nappi
-  addItemButton: { backgroundColor: '#2196F3', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, marginLeft: 8 },
+  addItemButton: { backgroundColor: '#7ed957', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, marginLeft: 8 },
   // "Lisää ostos" -napin teksti
   addItemButtonText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   // Yksittäinen ostosrivi modalissa
