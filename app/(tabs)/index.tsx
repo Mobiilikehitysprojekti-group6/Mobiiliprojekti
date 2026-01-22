@@ -7,19 +7,29 @@ export default function Home() {
   const router = useRouter();
   const { uid, lists, stores, createList, createStore, getStoreName } = useShopVM()
 
-  // --- Modal: uusi lista ---
+  
   const [createListModal, setCreateListModal] = useState(false)
+  const [modalStep, setModalStep] = useState<"createList" | "pickStore">("createList")
   const [newListName, setNewListName] = useState("")
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
+  const [newStoreName, setNewStoreName] = useState("");
 
-  // --- Modal: valitse/lisää kauppa ---
-  const [storeModal, setStoreModal] = useState(false)
-  const [newStoreName, setNewStoreName] = useState("")
 
   const selectedStoreLabel = useMemo(
     () => getStoreName(selectedStoreId) ?? "Ei kauppaa",
     [selectedStoreId, getStoreName]
   )
+
+  const openCreateListModal = () => {
+    setModalStep("createList");
+    setCreateListModal(true);
+  }
+
+  const closeModal = () => {
+    setCreateListModal(false);
+    setModalStep("createList"); // reset
+  }
+
 
   // Luo lista ja siirry suoraan listanäkymään
   const handleCreateList = async () => {
@@ -28,7 +38,7 @@ export default function Home() {
 
     setNewListName("");
     setSelectedStoreId(null);
-    setCreateListModal(false);
+    closeModal();
 
     router.push({ pathname: "/shoplist", params: { listId: id } })
   };
@@ -44,7 +54,7 @@ export default function Home() {
       {/* Header */}
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>Ostoslistat</Text>
-        <TouchableOpacity onPress={() => setCreateListModal(true)} style={styles.addButton}>
+        <TouchableOpacity onPress={openCreateListModal} style={styles.addButton}>
           <Text style={styles.addButtonText}>+</Text>
         </TouchableOpacity>
       </View>
@@ -85,29 +95,34 @@ export default function Home() {
       <Modal
         visible={createListModal}
         transparent
-        animationType="slide"
-        onRequestClose={() => setCreateListModal(false)}
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        onRequestClose={closeModal}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Uusi ostoslista</Text>
 
-            <TextInput
+            {/* STEP 1: Uusi lista */}
+            {modalStep === "createList" && (
+              <>
+              <Text style={styles.modalTitle}>Uusi ostoslista</Text>
+
+              <TextInput
               style={styles.input}
               placeholder="Listan nimi"
               value={newListName}
               onChangeText={setNewListName}
-            />
+              />
 
-            <Pressable onPress={() => setStoreModal(true)} style={styles.storePicker}>
-              <Text style={{ fontWeight: "700" }}>Kauppa:</Text>
-              <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>
-                {selectedStoreLabel}
-              </Text>
-              <Text style={{ color: "#7ed957", fontWeight: "900" }}>Vaihda</Text>
-            </Pressable>
+              <Pressable onPress={() => setModalStep("pickStore")} style={styles.storePicker}>
+                <Text style={{ fontWeight: "700" }}>Kauppa:</Text>
+                <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>
+                  {selectedStoreLabel}
+                </Text>
+                <Text style={{ color: "#7ed957", fontWeight: "900" }}>Vaihda</Text>
+              </Pressable>
 
-            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+              <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
               <Pressable onPress={() => setCreateListModal(false)} style={styles.modalButton}>
                 <Text>Peruuta</Text>
               </Pressable>
@@ -115,70 +130,68 @@ export default function Home() {
                 <Text style={{ fontWeight: "900" }}>Luo</Text>
               </Pressable>
             </View>
-          </View>
-        </View>
-      </Modal>
 
-      {/* Modal: valitse / lisää kauppa */}
-      <Modal
-        visible={storeModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setStoreModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Valitse kauppa</Text>
+            </> )}
 
-            {/* Ei kauppaa */}
-            <Pressable
-              onPress={() => {
-                setSelectedStoreId(null);
-                setStoreModal(false);
+            {/* STEP 2: Valitse kauppa */}
+            {modalStep === "pickStore" && (
+              <>
+              <View style={styles.stepHeader}>
+                <Pressable onPress={() => setModalStep("createList")}>
+                  <Text style={styles.modalTitle}>Valitse kauppa</Text>
+                  <View style={{ width: 32 }}/>
+                </Pressable>
+              </View>
+
+              {/* Ei kauppaa */}
+              <Pressable
+                onPress={() => {
+                  setSelectedStoreId(null)
+                  setModalStep("createList")
               }}
               style={[styles.storeRow, { borderWidth: 1, borderColor: "#ddd" }]}
-            >
-              <Text style={{ fontWeight: "900" }}>Ei kauppaa</Text>
-            </Pressable>
+              >
+                <Text style={{ fontWeight: "900" }}>Ei kauppaa</Text>
+              </Pressable>
 
-            {/* Olemassa olevat kaupat */}
-            <FlatList
-              data={stores}
-              keyExtractor={(s) => s.id}
-              style={{ maxHeight: 220, marginTop: 10 }}
-              renderItem={({ item }) => (
-                <Pressable
-                  onPress={() => {
-                    setSelectedStoreId(item.id);
-                    setStoreModal(false);
-                  }}
-                  style={styles.storeRow}
-                >
-                  <Text style={{ fontWeight: "700" }}>{item.name}</Text>
+              {/* Olemassaolevat kaupat */}
+              <FlatList
+                data={stores}
+                keyExtractor={(s) => s.id}
+                style={{ maxHeight: 220, marginTop: 10 }}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => {
+                      setSelectedStoreId(item.id)
+                      setModalStep("createList")
+                    }}
+                    style={styles.storeRow}
+                  >
+                    <Text style={{ fontWeight: "700" }}>{item.name}</Text>
+                  </Pressable>
+                )}
+              />
+
+              <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
+
+              {/* Lisää uusi kauppa */}
+              <Text style={{ fontWeight: "700", marginBottom: 6 }}>Lisää uusi kauppa</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Kaupan nimi"
+                value={newStoreName}
+                onChangeText={setNewStoreName}
+              />
+              <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+                <Pressable onPress={closeModal} style={styles.modalButton}>
+                  <Text>Peruuta</Text>
                 </Pressable>
-              )}
-              ListEmptyComponent={<Text style={{ color: "#666", marginTop: 8 }}>Ei kauppoja vielä.</Text>}
-            />
-
-            <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
-
-            {/* Lisää uusi kauppa */}
-            <Text style={{ fontWeight: "900", marginBottom: 6 }}>Lisää uusi kauppa</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Kaupan nimi"
-              value={newStoreName}
-              onChangeText={setNewStoreName}
-            />
-
-            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-              <Pressable onPress={() => setStoreModal(false)} style={styles.modalButton}>
-                <Text>Valmis</Text>
-              </Pressable>
-              <Pressable onPress={handleCreateStore} style={styles.modalButton}>
-                <Text style={{ fontWeight: "900" }}>Lisää</Text>
-              </Pressable>
-            </View>
+                <Pressable onPress={handleCreateStore} style={styles.modalButton}>
+                  <Text style={{ fontWeight: "900" }}>Lisää</Text>
+                </Pressable>
+              </View>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -187,7 +200,7 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1 },
+  container: { padding: 20, flex: 1},
   headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   headerTitle: { fontSize: 24, fontWeight: "bold", flex: 1 },
   addButton: {
@@ -220,6 +233,7 @@ const styles = StyleSheet.create({
   },
   modalContent: { backgroundColor: "white", padding: 24, borderRadius: 10, width: "85%" },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
+
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -239,4 +253,15 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   storeRow: { padding: 12, borderRadius: 10, backgroundColor: "#f7f7f7", marginVertical: 6 },
+
+  stepHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  backMiniBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#f2f2f2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backMiniText: { fontSize: 24, color: "#555", marginTop: -2 },
 });
