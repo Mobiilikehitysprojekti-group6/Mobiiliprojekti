@@ -1,50 +1,41 @@
-import React, { useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  FlatList,
-  Modal,
-  Pressable,
-} from "react-native";
+import React, { useMemo, useState } from "react"
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, Modal, Pressable } from "react-native"
 import { useRouter } from "expo-router";
-import { useShopVM } from "../../src/viewmodels/ShopVMContext";
+import { useShopVM } from "../../src/viewmodels/ShopVMContext"
 
 export default function Home() {
   const router = useRouter();
-  const { uid, lists, stores, createList, createStore, getStoreName } = useShopVM();
+  const { uid, lists, stores, createList, createStore, getStoreName } = useShopVM()
 
   // --- Modal: uusi lista ---
-  const [createListModal, setCreateListModal] = useState(false);
-  const [newListName, setNewListName] = useState("");
-  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null);
+  const [createListModal, setCreateListModal] = useState(false)
+  const [newListName, setNewListName] = useState("")
+  const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
 
   // --- Modal: valitse/lisää kauppa ---
-  const [storeModal, setStoreModal] = useState(false);
-  const [newStoreName, setNewStoreName] = useState("");
+  const [storeModal, setStoreModal] = useState(false)
+  const [newStoreName, setNewStoreName] = useState("")
 
   const selectedStoreLabel = useMemo(
     () => getStoreName(selectedStoreId) ?? "Ei kauppaa",
     [selectedStoreId, getStoreName]
-  );
+  )
 
   // Luo lista ja siirry suoraan listanäkymään
   const handleCreateList = async () => {
-    const id = await createList(newListName, selectedStoreId);
+    const id = await createList(newListName, selectedStoreId)
     if (!id) return;
 
     setNewListName("");
     setSelectedStoreId(null);
     setCreateListModal(false);
 
-    router.push({ pathname: "/shoplist", params: { listId: id } });
+    router.push({ pathname: "/shoplist", params: { listId: id } })
   };
 
   // Luo uusi kauppa (jää auki, jotta voi vielä valita sen listalle)
   const handleCreateStore = async () => {
-    await createStore(newStoreName);
+    await createStore(newStoreName)
     setNewStoreName("");
   };
 
@@ -58,7 +49,7 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-         {/* Debug: näkyykö uid ja vaihtuuko se reloadissa */}
+      {/* Debug: näkyykö uid ja vaihtuuko se reloadissa */}
       <Text style={{ color: "#666", marginBottom: 8 }}>
       uid: {uid ?? "ei vielä"}
       </Text>
