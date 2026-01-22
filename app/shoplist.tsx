@@ -23,6 +23,7 @@ import {
   orderBy,
   serverTimestamp,
 } from "../firebase/Config";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Item = { id: string; name: string; category?: string; done: boolean };
 
@@ -144,7 +145,7 @@ export default function ShopListScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.topRow}>
         <Pressable onPress={() => router.back()} style={styles.backBtn}>
@@ -223,7 +224,7 @@ export default function ShopListScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
