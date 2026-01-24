@@ -1,9 +1,9 @@
-import MapView, { Marker } from 'react-native-maps';
-import { ActivityIndicator, View, Text } from 'react-native';
-import { useMapViewModel } from '../../src/viewmodels/useMapViewModel';
+import MapView, { Marker } from 'react-native-maps'
+import { ActivityIndicator, View, Text } from 'react-native'
+import { useMapViewModel } from '../../src/viewmodels/useMapViewModel'
 
 export default function MapScreen() {
-  const { userLocation, stores, loading, error } = useMapViewModel();
+  const { userLocation, stores, loading, error } = useMapViewModel()
 
   if(loading) return <ActivityIndicator style={{ flex: 1 }}/>
   if(error) return <Text>{error}</Text>

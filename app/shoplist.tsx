@@ -262,4 +262,4 @@ const styles = StyleSheet.create({
   modalContent: { backgroundColor: "white", padding: 24, borderRadius: 10, width: "85%" },
   modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
   modalButton: { marginLeft: 16, marginTop: 12 },
-});
+})
