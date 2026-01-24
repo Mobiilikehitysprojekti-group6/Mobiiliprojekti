@@ -17,14 +17,20 @@ import { useShopVM } from "../../src/viewmodels/ShopVMContext";
 import { db, doc, setDoc, getDoc } from "../../firebase/config";
 
 export default function ProfileScreen() {
+  // Haetaan uid ShopVMContextista (anonyymi Firebase Auth)
   const { uid } = useShopVM();
+  
+  // State: username = muokattava arvo modalissa, savedUsername = Firestoressa tallennettu arvo
   const [username, setUsername] = useState('');
   const [savedUsername, setSavedUsername] = useState('');
+  
+  // Modal-näkyvyys
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
+  
+  // Ref input-kentälle, jotta voidaan fokussoida se modalin avautuessa
   const inputRef = useRef<TextInput>(null);
 
-  // Lataa käyttäjänimi Firestoresta
+  // Lataa käyttäjänimi Firestoresta kun uid on saatavilla
   useEffect(() => {
     const loadUsername = async () => {
       if (!uid) return;
@@ -40,14 +46,13 @@ export default function ProfileScreen() {
         }
       } catch (error) {
         console.error("Virhe käyttäjänimen latauksessa:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     loadUsername();
   }, [uid]);
 
+  // Fokusoi input-kenttä kun modal avautuu (100ms viive Androidille)
   useEffect(() => {
     if (isEditing) {
       setTimeout(() => {
@@ -56,28 +61,32 @@ export default function ProfileScreen() {
     }
   }, [isEditing]);
 
+  // Placeholder-funktio profiilikuvan vaihtoa varten
   const handleChangePicture = () => {
     Alert.alert("Vaihda kuva", "Kuvanhallinta tulossa pian!");
   };
 
+  // Avaa muokkausmodal ja aseta nykyinen tallennettu nimi muokattavaksi
   const handleEdit = () => {
     setUsername(savedUsername);
     setIsEditing(true);
   };
 
+  // Tallenna käyttäjänimi Firestoreen
   const handleSave = async () => {
+    // Validoi että käyttäjänimi ei ole tyhjä
     if (username.trim() === "") {
       Alert.alert("Virhe", "Käyttäjänimi ei voi olla tyhjä");
       return;
     }
 
+    // Jos uid puuttuu (lataus käynnissä), älä tee mitään
     if (!uid) {
-      Alert.alert("Virhe", "Käyttäjä ei ole kirjautunut");
       return;
     }
 
     try {
-      // Tallenna Firebaseen
+      // Tallenna users/{uid} dokumenttiin, merge: true säilyttää muut kentät
       await setDoc(doc(db, "users", uid), { username: username.trim() }, { merge: true });
       setSavedUsername(username);
       setIsEditing(false);
@@ -88,6 +97,7 @@ export default function ProfileScreen() {
     }
   };
 
+  // Sulje modal ilman tallennusta
   const handleCancel = () => {
     setIsEditing(false);
     Keyboard.dismiss();
