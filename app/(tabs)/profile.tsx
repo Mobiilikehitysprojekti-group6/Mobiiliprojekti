@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useShopVM } from "../../src/viewmodels/ShopVMContext";
-import { db, doc, setDoc, getDoc } from "../../firebase/config";
+import { db, doc, setDoc, getDoc } from "../../firebase/Config";
 
 export default function ProfileScreen() {
   // Haetaan uid ShopVMContextista (anonyymi Firebase Auth)
