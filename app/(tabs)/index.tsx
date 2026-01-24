@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from "react"
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, Modal, Pressable } from "react-native"
-import { useRouter } from "expo-router";
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, Modal, Pressable, Alert } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { useRouter } from "expo-router"
 import { useShopVM } from "../../src/viewmodels/ShopVMContext"
 
 export default function Home() {
-  const router = useRouter();
-  const { uid, lists, stores, createList, createStore, getStoreName } = useShopVM()
+  const router = useRouter()
+  const { uid, lists, stores, createList, createStore, deleteList, deleteStore, getStoreName } = useShopVM()
 
-  
-  const [createListModal, setCreateListModal] = useState(false)
+
+  const [modalVisible, setModalVisible] = useState(false)
   const [modalStep, setModalStep] = useState<"createList" | "pickStore">("createList")
   const [newListName, setNewListName] = useState("")
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
@@ -21,47 +22,75 @@ export default function Home() {
   )
 
   const openCreateListModal = () => {
-    setModalStep("createList");
-    setCreateListModal(true);
+    setModalStep("createList")
+    setModalVisible(true)
   }
 
   const closeModal = () => {
-    setCreateListModal(false);
-    setModalStep("createList"); // reset
+    setModalVisible(false)
+    setModalStep("createList") // reset
   }
 
+  const confirmDeleteList = (listId: string, listName: string) => {
+    Alert.alert("Poistetaanko lista?", `"${listName}" poistetaan pysyvästi.`, [
+      { text: "Peruuta", style: "cancel" },
+      { text: "Poista", style: "destructive", onPress: () => deleteList(listId) },
+    ])
+  }
+
+  const confirmDeleteStore = (storeId: string, storeName: string) => {
+    Alert.alert(
+      "Poistetaanko kauppa?",
+      `"${storeName}" poistetaan. Kauppaan liitetyt listat jäävät talteen, mutta niiltä poistuu kauppa-valinta.`,
+      [
+        { text: "Peruuta", style: "cancel" },
+        {
+          text: "Poista",
+          style: "destructive",
+          onPress: async () => {
+            if (selectedStoreId === storeId) setSelectedStoreId(null)
+            await deleteStore(storeId)
+          },
+        },
+      ]
+    )
+  }
 
   // Luo lista ja siirry suoraan listanäkymään
   const handleCreateList = async () => {
     const id = await createList(newListName, selectedStoreId)
-    if (!id) return;
+    if (!id) return
 
-    setNewListName("");
-    setSelectedStoreId(null);
-    closeModal();
+    setNewListName("")
+    setSelectedStoreId(null)
+    closeModal()
 
     router.push({ pathname: "/shoplist", params: { listId: id } })
-  };
+  }
 
   // Luo uusi kauppa (jää auki, jotta voi vielä valita sen listalle)
   const handleCreateStore = async () => {
     await createStore(newStoreName)
-    setNewStoreName("");
-  };
+    setNewStoreName("")
+  }
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>Ostoslistat</Text>
-        <TouchableOpacity onPress={openCreateListModal} style={styles.addButton}>
+        <Pressable
+          onPress={openCreateListModal}
+          style={[styles.addButton, !uid && { opacity: 0.4 }]}
+          disabled={!uid}
+        >
           <Text style={styles.addButtonText}>+</Text>
-        </TouchableOpacity>
+        </Pressable>
       </View>
 
       {/* Debug: näkyykö uid ja vaihtuuko se reloadissa */}
       <Text style={{ color: "#666", marginBottom: 8 }}>
-      uid: {uid ?? "ei vielä"}
+        uid: {uid ?? "ei vielä"}
       </Text>
 
       {/* Auth-status */}
@@ -72,19 +101,24 @@ export default function Home() {
         data={lists}
         keyExtractor={(l) => l.id}
         renderItem={({ item }) => {
-          const storeName = getStoreName(item.storeId);
+          const storeName = getStoreName(item.storeId) ?? "Ei kauppaa"
           return (
-            <TouchableOpacity
-              style={styles.listBlock}
-              onPress={() => router.push({ pathname: "/shoplist", params: { listId: item.id } })}
-            >
-              <View style={{ flex: 1 }}>
+            <View style={styles.listBlock}>
+              <Pressable
+                style={{ flex: 1 }}
+                onPress={() => router.push({ pathname: "/shoplist", params: { listId: item.id } })}
+              >
                 <Text style={styles.listTitle}>{item.name}</Text>
-                <Text style={styles.listSubtitle}>{storeName ?? "Ei kauppaa"}</Text>
-              </View>
-              <Text style={styles.chevron}>›</Text>
-            </TouchableOpacity>
-          );
+                <Text style={styles.listSubtitle}>{storeName}</Text>
+              </Pressable>
+
+              <Pressable onPress={() => confirmDeleteList(item.id, item.name)} hitSlop={10} style={styles.iconButton}>
+                <Ionicons name="trash-outline" size={22} color="#e53935" />
+              </Pressable>
+
+              <Ionicons name="chevron-forward" size={20} color="#bbb" />
+            </View>
+          )
         }}
         ListEmptyComponent={
           <Text style={{ marginTop: 20, color: "#666" }}>Luo ensimmäinen lista painamalla +</Text>
@@ -93,7 +127,7 @@ export default function Home() {
 
       {/* Modal: Uusi lista */}
       <Modal
-        visible={createListModal}
+        visible={modalVisible}
         transparent
         animationType="fade"
         presentationStyle="overFullScreen"
@@ -105,102 +139,112 @@ export default function Home() {
             {/* STEP 1: Uusi lista */}
             {modalStep === "createList" && (
               <>
-              <Text style={styles.modalTitle}>Uusi ostoslista</Text>
+                <Text style={styles.modalTitle}>Uusi ostoslista</Text>
 
-              <TextInput
-              style={styles.input}
-              placeholder="Listan nimi"
-              value={newListName}
-              onChangeText={setNewListName}
-              />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Listan nimi"
+                  value={newListName}
+                  onChangeText={setNewListName}
+                />
 
-              <Pressable onPress={() => setModalStep("pickStore")} style={styles.storePicker}>
-                <Text style={{ fontWeight: "700" }}>Kauppa:</Text>
-                <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>
-                  {selectedStoreLabel}
-                </Text>
-                <Text style={{ color: "#7ed957", fontWeight: "900" }}>Vaihda</Text>
-              </Pressable>
+                <Pressable onPress={() => setModalStep("pickStore")} style={styles.storePicker}>
+                  <Text style={{ fontWeight: "700" }}>Kauppa:</Text>
+                  <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>
+                    {selectedStoreLabel}
+                  </Text>
+                  <Text style={{ color: "#7ed957", fontWeight: "900" }}>Vaihda</Text>
+                </Pressable>
 
-              <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-              <Pressable onPress={() => setCreateListModal(false)} style={styles.modalButton}>
-                <Text>Peruuta</Text>
-              </Pressable>
-              <Pressable onPress={handleCreateList} style={styles.modalButton}>
-                <Text style={{ fontWeight: "900" }}>Luo</Text>
-              </Pressable>
-            </View>
-
-            </> )}
+                <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+                  <Pressable onPress={closeModal} style={[styles.modalButton, !uid && { opacity: 0.4 }]} disabled={!uid}>
+                    <Text>Peruuta</Text>
+                  </Pressable>
+                  <Pressable onPress={handleCreateList} style={styles.modalButton}>
+                    <Text style={{ fontWeight: "900" }}>Luo</Text>
+                  </Pressable>
+                </View>
+              </>
+            )}
 
             {/* STEP 2: Valitse kauppa */}
             {modalStep === "pickStore" && (
               <>
-              <View style={styles.stepHeader}>
-                <Pressable onPress={() => setModalStep("createList")}>
+                <View style={styles.stepHeader}>
+                  <Pressable onPress={() => setModalStep("createList")} style={styles.backMiniBtn}>
+                    <Ionicons name="chevron-back" size={18} color="#555" />
+                  </Pressable>
                   <Text style={styles.modalTitle}>Valitse kauppa</Text>
-                  <View style={{ width: 32 }}/>
-                </Pressable>
-              </View>
+                  <View style={{ width: 32 }} />
+                </View>
 
-              {/* Ei kauppaa */}
-              <Pressable
-                onPress={() => {
-                  setSelectedStoreId(null)
-                  setModalStep("createList")
-              }}
-              style={[styles.storeRow, { borderWidth: 1, borderColor: "#ddd" }]}
-              >
-                <Text style={{ fontWeight: "900" }}>Ei kauppaa</Text>
-              </Pressable>
-
-              {/* Olemassaolevat kaupat */}
-              <FlatList
-                data={stores}
-                keyExtractor={(s) => s.id}
-                style={{ maxHeight: 220, marginTop: 10 }}
-                renderItem={({ item }) => (
+                {/* Ei kauppaa */}
+                <View style={styles.storeRow}>
                   <Pressable
+                  style={{ flex:1}}
                     onPress={() => {
-                      setSelectedStoreId(item.id)
+                      setSelectedStoreId(null)
                       setModalStep("createList")
                     }}
-                    style={styles.storeRow}
                   >
-                    <Text style={{ fontWeight: "700" }}>{item.name}</Text>
+                    <Text style={{ fontWeight: "900" }}>Ei kauppaa</Text>
                   </Pressable>
-                )}
-              />
+                  {selectedStoreId === null && <Ionicons name="checkmark" size={18} color="#7ed957" />}
+                </View>
 
-              <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
+                {/* Olemassaolevat kaupat */}
+                <FlatList
+                  data={stores}
+                  keyExtractor={(s) => s.id}
+                  style={{ maxHeight: 220, marginTop: 10 }}
+                  renderItem={({ item }) => (
+                    <View style={styles.storeRow}>
+                      <Pressable
+                      style={{ flex: 1 }}
+                      onPress={() => {
+                        setSelectedStoreId(item.id)
+                        setModalStep("createList")
+                      }} 
+                    >
+                      <Text style={{ fontWeight: "700" }}>{item.name}</Text>
+                      </Pressable>
 
-              {/* Lisää uusi kauppa */}
-              <Text style={{ fontWeight: "700", marginBottom: 6 }}>Lisää uusi kauppa</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Kaupan nimi"
-                value={newStoreName}
-                onChangeText={setNewStoreName}
-              />
-              <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-                <Pressable onPress={closeModal} style={styles.modalButton}>
-                  <Text>Peruuta</Text>
-                </Pressable>
-                <Pressable onPress={handleCreateStore} style={styles.modalButton}>
-                  <Text style={{ fontWeight: "900" }}>Lisää</Text>
-                </Pressable>
-              </View>
+                      {selectedStoreId === item.id && <Ionicons name="checkmark" size={18} color="#7ed957" />}
+
+                      <Pressable onPress={() => confirmDeleteStore(item.id, item.name)} hitSlop={10} style={styles.iconButton}>
+                        <Ionicons name="trash-outline" size={18} color="#e53935" />
+                      </Pressable>
+                    </View>
+                  )}
+                  ListEmptyComponent={<Text style={{ color: "#666" }}>Ei vielä kauppoja.</Text>}
+                />
+
+                <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
+
+                {/* Lisää uusi kauppa */}
+                <Text style={{ fontWeight: "700", marginBottom: 6 }}>Lisää uusi kauppa</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Kaupan nimi"
+                  value={newStoreName}
+                  onChangeText={setNewStoreName}
+                />
+                <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+                  <Pressable onPress={closeModal} style={styles.modalButton}>
+                    <Text>Peruuta</Text>
+                  </Pressable>
+                </View>
               </>
             )}
           </View>
         </View>
       </Modal>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1},
+  container: { padding: 20, flex: 1 },
   headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
   headerTitle: { fontSize: 24, fontWeight: "bold", flex: 1 },
   addButton: {
@@ -224,6 +268,7 @@ const styles = StyleSheet.create({
   listTitle: { fontSize: 18, fontWeight: "900" },
   listSubtitle: { marginTop: 4, color: "#666" },
   chevron: { fontSize: 28, color: "#bbb", marginLeft: 10 },
+  iconButton: { padding: 6, borderRadius: 10 },
 
   modalOverlay: {
     flex: 1,
@@ -263,5 +308,4 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  backMiniText: { fontSize: 24, color: "#555", marginTop: -2 },
-});
+})
