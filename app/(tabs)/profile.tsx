@@ -10,9 +10,11 @@ import {
   Platform,
   Pressable,
   ScrollView,
-  Modal
+  Modal,
+  Image
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as ImagePicker from 'expo-image-picker'; //Kuva valitaan gallerian kautta
 import { useShopVM } from "../../src/viewmodels/ShopVMContext";
 import { db, doc, setDoc, getDoc } from "../../firebase/Config";
 
@@ -23,6 +25,9 @@ export default function ProfileScreen() {
   // State: username = muokattava arvo modalissa, savedUsername = Firestoressa tallennettu arvo
   const [username, setUsername] = useState('');
   const [savedUsername, setSavedUsername] = useState('');
+  
+  // Profiilikuva state
+  const [profileImage, setProfileImage] = useState<string | null>(null);
   
   // Modal-näkyvyys
   const [isEditing, setIsEditing] = useState(false);
@@ -43,6 +48,9 @@ export default function ProfileScreen() {
             setSavedUsername(data.username);
             setUsername(data.username);
           }
+          if (data.profileImage) { // Ladataan profiilikuva Firestoresta
+            setProfileImage(data.profileImage);
+          }
         }
       } catch (error) {
         console.error("Virhe käyttäjänimen latauksessa:", error);
@@ -61,9 +69,39 @@ export default function ProfileScreen() {
     }
   }, [isEditing]);
 
-  // Placeholder-funktio profiilikuvan vaihtoa varten
-  const handleChangePicture = () => {
-    Alert.alert("Vaihda kuva", "Kuvanhallinta tulossa pian!");
+  // Profiilikuvan vaihtofunktio
+  const handleChangePicture = async () => {
+    // Pyydä lupa käyttää mediagalleriaa
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (permissionResult.granted === false) {
+      Alert.alert("Lupa vaaditaan", "Anna sovellukselle lupa käyttää galleriaa");
+      return;
+    }
+
+    // Avaa kuvagalleria
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      const base64Image = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      setProfileImage(base64Image);
+      
+      // Tallenna kuva Firestoreen
+      if (uid) {
+        try {
+          await setDoc(doc(db, "users", uid), { profileImage: base64Image }, { merge: true });
+        } catch (error) {
+          console.error("Virhe kuvan tallennuksessa:", error);
+          Alert.alert("Virhe", "Kuvan tallennus epäonnistui");
+        }
+      }
+    }
   };
 
   // Avaa muokkausmodal ja aseta nykyinen tallennettu nimi muokattavaksi
@@ -114,9 +152,13 @@ export default function ProfileScreen() {
         {/* Profile Picture */}
         <View style={styles.profileSection}>
           <View style={styles.profilePicture}>
-            <Text style={styles.profileInitial}>
-              {savedUsername.charAt(0).toUpperCase() || '?'}
-            </Text>
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            ) : (
+              <Text style={styles.profileInitial}>
+                {savedUsername.charAt(0).toUpperCase() || '?'}
+              </Text>
+            )}
           </View>
           <Pressable onPress={handleChangePicture}>
             <Text style={styles.changePictureText}>vaihda kuva</Text>
@@ -212,6 +254,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
+    overflow: 'hidden',
+  },
+  profileImage: {
+    width: '100%',
+    height: '100%',
   },
   profileInitial: {
     fontSize: 48,
