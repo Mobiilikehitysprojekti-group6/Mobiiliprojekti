@@ -175,7 +175,7 @@ export default function Home() {
                     <Ionicons name="chevron-back" size={18} color="#555" />
                   </Pressable>
                   <Text style={styles.modalTitle}>Valitse kauppa</Text>
-                  <View style={{ width: 32 }} />
+                  <View style={ styles.headerSpacer } />
                 </View>
 
                 {/* Ei kauppaa */}
@@ -230,9 +230,16 @@ export default function Home() {
                   onChangeText={setNewStoreName}
                 />
                 <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-                  <Pressable onPress={closeModal} style={styles.modalButton}>
-                    <Text>Peruuta</Text>
+                  <Pressable onPress={() => setModalStep("createList")} style={styles.modalButton}>
+                    <Text>Takaisin</Text>
                   </Pressable>
+                  <Pressable
+                    onPress={handleCreateStore}
+                    style={[styles.modalButton, !newStoreName.trim() && { opacity: 0.4 }]}
+                    disabled={!newStoreName.trim()} 
+                  >
+                    <Text style={{ fontWeight: "900" }}>Lisää</Text>
+                  </Pressable>  
                 </View>
               </>
             )}
@@ -277,7 +284,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: { backgroundColor: "white", padding: 24, borderRadius: 10, width: "85%" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12,textAlign: "center" },
 
   input: {
     borderWidth: 1,
@@ -297,9 +304,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
-  storeRow: { padding: 12, borderRadius: 10, backgroundColor: "#f7f7f7", marginVertical: 6 },
+  storeRow: { padding: 12, borderRadius: 10, backgroundColor: "#f7f7f7", marginVertical: 6, flexDirection: "row", alignItems: "center" },
+  trashBtn: {padding: 6, borderRadius: 10, marginLeft: 10 },
 
   stepHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  headerSpacer: { width: 32 },
   backMiniBtn: {
     width: 32,
     height: 32,
@@ -307,5 +316,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f2f2f2",
     alignItems: "center",
     justifyContent: "center",
+    marginRight: 8,
   },
 })
