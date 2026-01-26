@@ -9,40 +9,70 @@ export function useMapViewModel() {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
-    const ApiKey = process.env.EXPO_PUBLIC_GEOAPIFY_KEY
-
     const fetchStores = async (lat: number, lon: number) => {
-        try {
-            const radius = 10000 // 10 km
-            const url = `https://api.geoapify.com/v2/places?categories=commercial.supermarket&filter=circle:${lon},${lat},10000&limit=20&apiKey=${ApiKey}`
+  try {
+    const radius = 10000 // 10 km
 
-            const res = await fetch(url)
-            const data = await res.json()
+    const query = `
+        [out:json];
+        (
+        node["shop"](around:${radius},${lat},${lon});
+        way["shop"](around:${radius},${lat},${lon});
+        );
+        out center tags;
+        `
 
-            if(!data.features || !Array.isArray(data.features)) {
-                console.error("Geoapify API ei palauttanut features-arrayta", data)
-                setStores([])
-                setError("Kauppojen haku epäonnistui")
-                setLoading(false)
-                return
-            }
+    const res = await fetch(
+      "https://overpass-api.de/api/interpreter",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: "data=" + encodeURIComponent(query),
+      }
+    )
 
-            const mapped: Store[] = data.features.map((f: any) => ({
-                id: f.properties.place_id,
-                name: f.properties.name ?? "Tuntematon kauppa",
-                coordinates: {
-                    latitude: f.geometry.coordinates[1],
-                    longitude: f.geometry.coordinates[0],
-                },
-            }))
-            setStores(mapped)
-        } catch (e) {
-            console.error(e)
-            setError("Kauppojen haku epäonnistui")
-        } finally {
-            setLoading(false)
-        }
+    const data = await res.json()
+
+    if (!Array.isArray(data.elements)) {
+      console.error("Overpass ei palauttanut elements-arrayta", data)
+      setStores([])
+      setError("Kauppojen haku epäonnistui")
+      return
     }
+
+    const mapped: Store[] = data.elements
+      .map((el: any): Store | null => {
+        const lat = el.lat ?? el.center?.lat
+        const lon = el.lon ?? el.center?.lon
+
+        if (!lat || !lon) return null
+
+        return {
+          id: el.id.toString(),
+          name: el.tags?.name ?? "Tuntematon kauppa",
+          street: el.tags?.["addr:street"] ?? "",
+          housenumber: el.tags?.["addr:housenumber"] ?? "",
+          postcode: el.tags?.["addr:postcode"] ?? "",
+          city: el.tags?.["addr:city"] ?? "",
+          coordinates: {
+            latitude: lat,
+            longitude: lon,
+          },
+        }
+      })
+      .filter(Boolean) as Store[]
+
+    setStores(mapped)
+  } catch (e) {
+    console.error(e)
+    setError("Kauppojen haku epäonnistui")
+  } finally {
+    setLoading(false)
+  }
+}
+
 
     const requestLocation = async () => {
         const { status } = await Location.requestForegroundPermissionsAsync()
