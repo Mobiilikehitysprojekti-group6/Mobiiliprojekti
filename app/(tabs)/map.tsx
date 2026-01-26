@@ -36,6 +36,7 @@ export default function MapScreen() {
             longitude: store.coordinates.longitude,
           }}
           title={store.name}
+          description={`${store.street} ${store.housenumber}, ${store.postcode} ${store.city}`}
         />
       ))}
     </MapView>

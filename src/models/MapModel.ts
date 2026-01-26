@@ -1,12 +1,14 @@
 export type Coordinates = {
-    latitude: number
-    longitude: number
-    lat: number
-    lon: number
+  latitude: number
+  longitude: number
 }
 
 export type Store = {
-    id: string
-    name: string
-    coordinates: Coordinates
+  id: string
+  name: string
+  street: string
+  housenumber: string
+  postcode: string
+  city: string
+  coordinates: Coordinates
 }
