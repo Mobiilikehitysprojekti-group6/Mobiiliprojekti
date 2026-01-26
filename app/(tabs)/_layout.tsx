@@ -2,7 +2,7 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
 export default function TabsLayout() {
-    // Yhdistetään AuthViewModel myöhemmin
+   
     const isPremium = false;
 
     return (
@@ -10,7 +10,7 @@ export default function TabsLayout() {
             <Tabs.Screen 
                 name="index"
                 options={{
-                    title: "Koti",
+                    title: "Oma sivu",
                     tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color}/>,
                 }} 
             />
