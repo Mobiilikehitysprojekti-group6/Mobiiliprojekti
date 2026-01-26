@@ -1,6 +1,6 @@
-# Kauppalappu (React Native) — Perheille & Pariskunnille
+# Kauppalappu (React Native) — Perheille, pariskunnille ja yhdessä ostaville
 
-Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilisovellus, joka helpottaa arjen ostosten suunnittelua ja tekemistä. Sovelluksessa käyttäjät toimivat **ryhmissä**, joissa voidaan ylläpitää **reaaliaikaisesti päivittyviä kauppalappuja** eri kaupoille. Tuotteet lisätään **tuotekategorioittain**, ja kategorioita voi järjestää “fyysisen lapun” tapaan. Tarvittaessa sovellus voi hakea **lähimmän halutun kaupan** puhelimen GPS-sijainnin perusteella.
+Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostaville suunnattu mobiilisovellus, joka helpottaa arjen ostosten suunnittelua ja tekemistä. Sovelluksessa käyttäjät toimivat **ryhmissä**, joissa voidaan ylläpitää **reaaliaikaisesti päivittyviä kauppalappuja** eri kaupoille. Tuotteet lisätään **tuotekategorioittain**, ja kategorioita voi järjestää “fyysisen lapun” tapaan. Tarvittaessa sovellus voi hakea **lähimmän halutun kaupan** puhelimen GPS-sijainnin perusteella.
 
 > Kohdemarkkina: Suomi  
 > Teknologia: React Native (cross-platform: iOS + Android)
@@ -29,15 +29,15 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 - Roolit (esim. owner/member) *(mahdollisesti?)*
 
 ### 2) Useat kauppalistat eri kaupoille
-- Ryhmä voi luoda useita kauppalappuja (esim. “Prisma”, “K-Citymarket”, “Lidl”)
+- Käyttäjä voi luoda useita kauppalappuja ja halutessaan liittää niihin kaupan (“Prisma”, “K-Citymarket”, “Lidl”)
 - Listakohtainen sisältö ja järjestys
-- Listojen nimeäminen ja arkistointi *(Jos jää aikaa)*
+- Listojen nimeäminen ja tallennus Firebase/Firestoreen
 
 ### 3) Tuotteet tuotekategorioittain + siirrettävät kategoriat
-- Tuotteen lisääminen: nimi, määrä, lisätiedot(?)
+- Tuotteen lisääminen: nimi, määrä
 - Kategoriat (esim. Hedelmät, Maitotuotteet, Pakasteet…)
 - Kategorioiden järjestyksen muokkaus drag & drop (siirrettävä “fyysisen lapun” tapaan)
-- Tuotteiden siirtäminen kategorian sisällä / kategorioiden välillä *(Jos jää aikaa)*
+- Tuotteiden siirtäminen kategorian sisällä (drag&drop)
 
 ### 4) Reaaliaikainen päivittyminen
 - Kun yksi käyttäjä lisää/muokkaa/poistaa, muut näkevät muutokset reaaliajassa
@@ -46,11 +46,11 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 ### 5) GPS: lähimmän halutun kaupan haku
 - “Etsi lähin kauppa” -toiminto sijainnin perusteella
 - Valittavissa kauppaketju / kauppatyyppi *(selvitetään)*
-- Avataan reitti karttasovellukseen
+- Tarkistetaan GPS-signaalin käyttölupa ja avataan reitti karttasovellukseen
 
 ### 6) Offline-tuki (MVP+)
 - Sovellus näyttää **viimeisimmän synkatun** kauppalapun, vaikka internet-yhteys katkeaa
-- Käyttöliittymä näyttää yhteyden/synkkauksen tilan: **Synkattu / Synkronoidaan / Offline**
+- Käyttöliittymä näyttää yhteyden/synkkauksen tilan: **Synkattu / Synkronoidaan / Offline** *(selvitetään)*
 - *(Valinnainen laajennus)* Offline-muutokset jonoutetaan ja synkataan automaattisesti, kun yhteys palautuu
 
 ### 7) Perustoiminnot (CRUD)
@@ -58,7 +58,7 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
   - kauppalistat
   - kategoriat
   - tuotteet
-
+- Huomioidaan subcollectionsien poistaminen Firebase/Firestoresta
 ---
 
 ## Projektin vaatimukset ja miten ne täyttyvät
@@ -93,8 +93,8 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 - React Native (cross-platform)
 - Expo
 - TypeScript
-- Reaaliaikainen backend: esim. Firebase Firestore
-- Kartta/paikkatieto: esim. Expo Location + Places API
+- Reaaliaikainen backend: Firebase Firestore
+- Kartta/paikkatieto: esim. Expo Location + Overpass API
 - 
 ---
 
@@ -110,6 +110,7 @@ Kauppalappu on Suomessa toimiville perheille ja pariskunnille suunnattu mobiilis
 git clone <repo-url>
 cd <repo>
 npm install
+
 
 
 
