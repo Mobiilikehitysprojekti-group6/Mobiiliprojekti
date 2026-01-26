@@ -1,4 +1,4 @@
-# Kauppalappu (React Native) — Perheille, pariskunnille ja yhdessä ostaville
+# KauppaLappu (React Native) — Perheille, pariskunnille ja yhdessä ostaville
 
 Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostaville suunnattu mobiilisovellus, joka helpottaa arjen ostosten suunnittelua ja tekemistä. Sovelluksessa käyttäjät toimivat **ryhmissä**, joissa voidaan ylläpitää **reaaliaikaisesti päivittyviä kauppalappuja** eri kaupoille. Tuotteet lisätään **tuotekategorioittain**, ja kategorioita voi järjestää “fyysisen lapun” tapaan. Tarvittaessa sovellus voi hakea **lähimmän halutun kaupan** puhelimen GPS-sijainnin perusteella.
 
@@ -94,7 +94,7 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 - Expo
 - TypeScript
 - Reaaliaikainen backend: Firebase Firestore
-- Kartta/paikkatieto: esim. Expo Location + Overpass API
+- Kartta/paikkatieto: Expo Location + Overpass API
 - 
 ---
 
@@ -110,6 +110,7 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 git clone <repo-url>
 cd <repo>
 npm install
+
 
 
 
