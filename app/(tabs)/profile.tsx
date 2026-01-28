@@ -175,6 +175,10 @@ export default function ProfileScreen() {
             </Text>
           </Pressable>
           
+          <Pressable style={styles.statisticsButton} onPress={() => router.push('/statistics')}>
+            <Text style={styles.statisticsButtonText}>Statistiikka</Text>
+          </Pressable>
+          
           <Pressable style={styles.aboutButton} onPress={() => router.push('/about')}>
             <Text style={styles.aboutButtonText}>Tietoja sovelluksesta</Text>
           </Pressable>
@@ -290,6 +294,18 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 14,
     color: '#555',
+  },
+  statisticsButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: '#e8f5e9',
+    borderRadius: 15,
+    marginTop: 10,
+  },
+  statisticsButtonText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '600',
   },
   aboutButton: {
     paddingHorizontal: 20,
