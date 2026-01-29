@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import * as Location from "expo-location"
 import { Alert } from "react-native"
 import { Store } from "../models/MapModel"
@@ -6,6 +6,7 @@ import { Store } from "../models/MapModel"
 export function useMapViewModel() {
     const [userLocation, setUserLocation] = useState<Location.LocationObjectCoords | null>(null)
     const [stores, setStores] = useState<Store[]>([])
+    const [searchQuery, setSearchQuery] = useState("")
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -56,6 +57,7 @@ export function useMapViewModel() {
           housenumber: el.tags?.["addr:housenumber"] ?? "",
           postcode: el.tags?.["addr:postcode"] ?? "",
           city: el.tags?.["addr:city"] ?? "",
+          brand: el.tags?.brand,
           coordinates: {
             latitude: lat,
             longitude: lon,
@@ -71,7 +73,22 @@ export function useMapViewModel() {
   } finally {
     setLoading(false)
   }
-}
+  }
+
+    const filteredStores = useMemo(() => {
+      if (!searchQuery.trim()) {
+        return stores
+      }
+
+      const query = searchQuery.toLowerCase()
+
+      return stores.filter(store => {
+        const name = (store.name || "").toLowerCase()
+        const brand = (store.brand || "").toLowerCase()
+        
+        return name.includes(query) || brand.includes(query)
+    })
+    }, [stores, searchQuery])
 
 
     const requestLocation = async () => {
@@ -104,6 +121,9 @@ export function useMapViewModel() {
     return {
         userLocation,
         stores,
+        searchQuery,
+        setSearchQuery,
+        filteredStores,
         loading,
         error,
         refresh: init,
