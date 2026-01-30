@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from 'expo-image-picker'; //Kuva valitaan gallerian kautta
+import { router } from "expo-router";
 import { useShopVM } from "../../src/viewmodels/ShopVMContext";
 import { db, doc, setDoc, getDoc } from "../../firebase/Config";
 
@@ -173,6 +174,10 @@ export default function ProfileScreen() {
               {savedUsername ? 'Muokkaa käyttäjänimeä' : 'Lisää käyttäjänimi'}
             </Text>
           </Pressable>
+          
+          <Pressable style={styles.aboutButton} onPress={() => router.push('/about')}>
+            <Text style={styles.aboutButtonText}>Tietoja sovelluksesta</Text>
+          </Pressable>
         </View>
       </ScrollView>
 
@@ -285,6 +290,17 @@ const styles = StyleSheet.create({
   editButtonText: {
     fontSize: 14,
     color: '#555',
+  },
+  aboutButton: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 15,
+    marginTop: 10,
+  },
+  aboutButtonText: {
+    fontSize: 14,
+    color: '#777',
   },
   modalContainer: {
     flex: 1,
