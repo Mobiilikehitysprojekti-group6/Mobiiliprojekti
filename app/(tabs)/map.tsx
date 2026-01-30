@@ -1,9 +1,11 @@
-import MapView, { Marker } from 'react-native-maps'
-import { ActivityIndicator, View, Text, StyleSheet, TextInput } from 'react-native'
+import MapView, { Callout, Marker } from 'react-native-maps'
+import { ActivityIndicator, View, Text, StyleSheet, TextInput, Alert } from 'react-native'
 import { useMapViewModel } from '../../src/viewmodels/useMapViewModel'
+import { useShopVM } from '../../src/viewmodels/ShopVMContext'
 
 export default function MapScreen() {
   const { userLocation, stores, loading, error, searchQuery, setSearchQuery, filteredStores } = useMapViewModel()
+  const { createStore } = useShopVM()
 
   if(loading) return <ActivityIndicator style={{ flex: 1 }}/>
   if(error) return <Text>{error}</Text>
@@ -44,12 +46,23 @@ export default function MapScreen() {
               latitude: store.coordinates.latitude,
               longitude: store.coordinates.longitude,
             }}
-            title={store.name}
-            description={[
-              `${store.street} ${store.housenumber}`,
-              `${store.postcode} ${store.city}`
-            ].filter(Boolean).join(", ")}
-          />
+           >
+            <Callout
+              onPress={async () => {
+                await createStore(store.name)
+                Alert.alert("Kauppa tallennettu", `${store.name} on tallennettu suosikkeihisi.`)
+              }}
+            >
+              <View style={styles.callOutBox}>
+                <Text style={styles.storeTitle}>{store.name}</Text>
+                <Text>{store.street} {store.housenumber}, {store.postcode} {store.city}</Text>
+                <View style={styles.saveStoreButton}>
+                  <Text style={styles.saveStoreButtonText}>Tallenna kauppa</Text>
+                </View>
+              </View>
+
+            </Callout>
+           </Marker>
         ))}
       </MapView>
     </View>
@@ -67,4 +80,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
   },
+  saveStoreButton: {
+    marginTop: 5,
+    backgroundColor: '#7ed957',
+    padding: 5,
+    borderRadius: 5,
+  },
+  saveStoreButtonText: {
+    color: 'white',
+    textAlign: 'center',
+  },
+  callOutBox: {
+    padding: 10,
+    alignItems: 'center',
+  },
+  storeTitle: {
+    fontWeight: 'bold',
+  }
 })
