@@ -6,12 +6,13 @@ import {
   StyleSheet,
   Pressable,
   Modal,
-  SectionList,
   Alert,
+  useWindowDimensions,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
+import { NestableScrollContainer, NestableDraggableFlatList } from "react-native-draggable-flatlist"
 
 import { useShopVM, ListItem, Category } from "../src/viewmodels/ShopVMContext"
 
@@ -28,6 +29,11 @@ const scopeKey = (storeId: string | null, listId: string) =>
 export default function ShopListScreen() {
   const router = useRouter()
   const { listId } = useLocalSearchParams<{ listId: string }>()
+  const { width } = useWindowDimensions()
+  // Nappien leveydet suhteessa näytön leveyteen (max/min rajoilla)
+  // Huom! Ei laiteta stylesheettiin, koska riippuvat runtime-näytön leveydestä
+  const addWidth = Math.max(60, Math.min(78, Math.round(width * 0.13)))
+  const catWidth = Math.max(115, Math.min(180, Math.round(width * 0.28)))
 
   const {
     uid,
@@ -37,11 +43,15 @@ export default function ShopListScreen() {
     itemsByListId,
     subscribeCategoriesForList,
     createCategoryForList,
+    ensureDefaultStoreCategories,
     subscribeItems,
     addItem,
     updateItem,
     deleteItem,
-  } = useShopVM();
+    reorderCategoriesForList,
+    reorderItemsInCategory,
+    changeQuantity,
+  } = useShopVM()
 
   /**
    * Listan perustiedot: haetaan VM:n lists-taulukosta listId:llä.
@@ -74,7 +84,7 @@ export default function ShopListScreen() {
   const [newItemName, setNewItemName] = useState("")
 
   // itemille valittu kategoria (dropdownista)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null | undefined>(undefined)
 
   /* Kategoria dropdown */
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -105,6 +115,10 @@ export default function ShopListScreen() {
     const unsubItems = subscribeItems(list.id)
     const unsubCats = subscribeCategoriesForList(list.id, list.storeId)
 
+    if (list.storeId) {
+      ensureDefaultStoreCategories(list.storeId)
+    }
+
     return () => {
       unsubItems()
       unsubCats()
@@ -134,9 +148,10 @@ export default function ShopListScreen() {
   const title = storeName ? `${list.name} • ${storeName}` : list.name
 
   /* UI apunimet (kategorian nimi) */
-  const selectedCategoryName = useMemo(() => {
-    if (!selectedCategoryId) return "Ei kategoriaa"
-    return categories.find((c) => c.id === selectedCategoryId)?.name ?? "Ei kategoriaa"
+  const selectedCategoryLabel = useMemo(() => {
+    if (selectedCategoryId === undefined) return "Kategoria"
+    if (selectedCategoryId === null) return "Ei kategoriaa"
+    return categories.find((c) => c.id === selectedCategoryId)?.name ?? "Kategoria"
   }, [selectedCategoryId, categories])
 
   const editCategoryName = useMemo(() => {
@@ -146,36 +161,49 @@ export default function ShopListScreen() {
 
   /* Itemit ryhmiteltynä */
   /**
-   * Tehdään SectionListin tarvitsemat “sections”.
-   * - Jokaiselle kategorialle oma section (järjestys = category.order)
-   * - Lisäksi “Ei kategoriaa” -section jos sinne jää itemeitä
    *
-   * Tämä on perusta tulevalle drag&dropille: meillä on jo item.order & category.order VM:ssä.
+   * Tässä nyt drag&drop blokkeina, ei SectionListillä.
    */
-  const sections = useMemo(() => {
+
+  type CategoryBlock = {
+    id: string | null // null = "Ei kategoriaa"
+    name: string
+    order: number
+    items: ListItem[]
+  }
+
+  const blocks = useMemo<CategoryBlock[]>(() => {
     const byCat = new Map<string | null, ListItem[]>()
+
     for (const it of items) {
       const key = it.categoryId ?? null
       byCat.set(key, [...(byCat.get(key) ?? []), it])
     }
 
     // Kategoriat järjestyksessä
-    const catSections = categories
+    const catBlocks: CategoryBlock[] = categories
       .slice()
       .sort((a, b) => a.order - b.order)
       .map((c) => ({
-        title: c.name,
-        categoryId: c.id,
-        data: (byCat.get(c.id) ?? []).slice().sort((a, b) => a.order - b.order),
+        id: c.id,
+        name: c.name,
+        order: c.order,
+        items: (byCat.get(c.id) ?? []).slice().sort((a, b) => a.order - b.order),
       }))
-      .filter((s) => s.data.length > 0)
+      .filter((b) => b.items.length > 0) // suodatetaan pois tyhjät kategoriat
 
-    const noCat = (byCat.get(null) ?? []).slice().sort((a, b) => a.order - b.order)
+    // Ei kategoriaa
+    const noCatItems = (byCat.get(null) ?? []).slice().sort((a, b) => a.order - b.order)
+    if (noCatItems.length) {
+      catBlocks.push({
+        id: null,
+        name: "Ei kategoriaa",
+        order: 999999,
+        items: noCatItems,
+      })
+    }
 
-    return [
-      ...catSections,
-      ...(noCat.length ? [{ title: "Ei kategoriaa", categoryId: null, data: noCat }] : []),
-    ]
+    return catBlocks
   }, [items, categories])
 
   /* Actions */
@@ -208,7 +236,7 @@ export default function ShopListScreen() {
     const n = newItemName.trim()
     if (!n) return
 
-    await addItem(list.id, n, selectedCategoryId)
+    await addItem(list.id, n, selectedCategoryId ?? null)
     setNewItemName("")
   }
 
@@ -256,7 +284,7 @@ export default function ShopListScreen() {
     setAddingCategory(false)
   }
 
-  /* I */
+  /* UI */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -274,69 +302,130 @@ export default function ShopListScreen() {
       {/* Add row: Tuote + Kategoria dropdown + Lisää */}
       <View style={styles.addRow}>
         <TextInput
-          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0 }]}
           placeholder="Tuote"
           value={newItemName}
           onChangeText={setNewItemName}
         />
 
         {/* Kategoria dropdown */}
-        <Pressable onPress={openPickerForNew} style={styles.categorySelect}>
-          <Text style={{ color: "#666" }}>Kategoria</Text>
-          <Text style={{ fontWeight: "900" }} numberOfLines={1}>
-            {selectedCategoryName}
+        <Pressable onPress={openPickerForNew} style={[styles.categoryPill, { width: catWidth }]}>
+          <Text
+            style={[styles.categoryPillText, !selectedCategoryId && { color: "#888", fontWeight: "700" }]}
+            numberOfLines={1}
+          >
+            {selectedCategoryLabel}
           </Text>
           <Ionicons name="chevron-down" size={16} color="#666" />
         </Pressable>
 
-        <Pressable onPress={handleAdd} style={styles.addBtn}>
+
+        <Pressable onPress={handleAdd} style={[styles.addBtn, { width: addWidth }]}>
           <Text style={styles.addBtnText}>Lisää</Text>
         </Pressable>
       </View>
 
       {/* Tuotteet järjestettynä kategorian mukaan */}
-      <SectionList
-        sections={sections}
-        keyExtractor={(it) => it.id}
-        stickySectionHeadersEnabled={false}
-        contentContainerStyle={{ paddingBottom: 24 }}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-          </View>
-        )}
-        renderItem={({ item }) => (
-          <View style={styles.itemRow}>
-            <Pressable onPress={() => toggleDone(item)} style={styles.checkbox} hitSlop={10}>
-              <Text style={{ fontSize: 20 }}>{item.done ? "✔" : "□"}</Text>
-            </Pressable>
+      {/* Tuotteet (drag&drop): kategoriat + tuotteet saman sivun sisällä */}
+      <NestableScrollContainer contentContainerStyle={{ paddingBottom: 24 }}>
+        <NestableDraggableFlatList
+          data={blocks}
+          keyExtractor={(b) => String(b.id ?? "__none__")}
+          // tärkeä: ulompi lista ei scrollaa itse, scroll container hoitaa
+          scrollEnabled={false}
+          onDragEnd={async ({ data }) => {
+            // siirretään vain oikeita kategorioita; "Ei kategoriaa" jätetään loppuun
+            const nextCatIds = data.filter((b) => b.id !== null).map((b) => b.id as string)
+            await reorderCategoriesForList(list.id, list.storeId, nextCatIds)
+          }}
+          renderItem={({ item: block, drag, isActive }) => (
+            <View style={{ paddingTop: 10 }}>
+              {/* Kategoria-otsikko + drag-handle */}
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>{block.name}</Text>
 
-            {/* Painamalla nimeä avaat muokkauksen */}
-            <Pressable onPress={() => openEdit(item)} style={{ flex: 1 }}>
-              <Text style={[styles.itemText, item.done && styles.itemDone]}>{item.name}</Text>
-            </Pressable>
+                {block.id !== null ? (
+                  <Pressable onLongPress={drag} disabled={isActive} hitSlop={10}>
+                    <Ionicons name="reorder-three" size={22} color="#666" />
+                  </Pressable>
+                ) : (
+                  // Ei kategoriaa: ei drag-handlea kategorian tasolla
+                  <View style={{ width: 22 }} />
+                )}
+              </View>
 
-            {/* Roskakori ikonina */}
-            <Pressable
-              onPress={() =>
-                Alert.alert("Poistetaanko tuote?", `"${item.name}" poistetaan.`, [
-                  { text: "Peruuta", style: "cancel" },
-                  { text: "Poista", style: "destructive", onPress: () => remove(item) },
-                ])
-              }
-              style={styles.iconButton}
-              hitSlop={10}
-            >
-              <Ionicons name="trash-outline" size={20} color="#e53935" />
-            </Pressable>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={{ marginTop: 16, color: "#666" }}>
-            Lisää ensimmäinen tuote yllä.
-          </Text>
-        }
-      />
+              {/* Tuotteet draggable tässä kategoriassa */}
+              <NestableDraggableFlatList
+                data={block.items}
+                keyExtractor={(it) => it.id}
+                scrollEnabled={false}
+                onDragEnd={async ({ data }) => {
+                  const nextItemIds = data.map((it) => it.id)
+                  await reorderItemsInCategory(list.id, block.id, nextItemIds)
+                }}
+                ListEmptyComponent={
+                  <Text style={{ color: "#888", marginBottom: 6 }}>
+                    (Ei tuotteita)
+                  </Text>
+                }
+                renderItem={({ item, drag: dragItem, isActive: itemActive }) => (
+                  <View style={[styles.itemRow, itemActive && { opacity: 0.85 }]}>
+                    {/* item drag handle */}
+                    <Pressable onLongPress={dragItem} disabled={itemActive} hitSlop={10}>
+                      <Ionicons name="reorder-two" size={18} color="#888" />
+                    </Pressable>
+
+                    <Pressable onPress={() => toggleDone(item)} style={styles.checkbox} hitSlop={10}>
+                      <Text style={{ fontSize: 20 }}>{item.done ? "✔" : "□"}</Text>
+                    </Pressable>
+
+                    {/* Painamalla nimeä avaat muokkauksen */}
+                    <Pressable onPress={() => openEdit(item)} style={{ flex: 1 }}>
+                      <Text style={[styles.itemText, item.done && styles.itemDone]}>{item.name}</Text>
+                    </Pressable>
+
+                    {/* quantity stepper */}
+                    <View style={styles.qtyWrap}>
+                      <Pressable onPress={() => changeQuantity(list.id, item.id, -1)} hitSlop={10}>
+                        <Text style={styles.qtyBtn}>−</Text>
+                      </Pressable>
+
+                      <Text style={styles.qtyText}>{item.quantity ?? 1}</Text>
+
+                      <Pressable onPress={() => changeQuantity(list.id, item.id, +1)} hitSlop={10}>
+                        <Text style={styles.qtyBtn}>+</Text>
+                      </Pressable>
+                    </View>
+
+                    {/* Roskakori */}
+                    <Pressable
+                      onPress={() =>
+                        Alert.alert("Poistetaanko tuote?", `"${item.name}" poistetaan.`, [
+                          { text: "Peruuta", style: "cancel" },
+                          { text: "Poista", style: "destructive", onPress: () => remove(item) },
+                        ])
+                      }
+                      style={styles.iconButton}
+                      hitSlop={10}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="#e53935" />
+                    </Pressable>
+                  </View>
+                )}
+              />
+            </View>
+          )}
+          ListFooterComponent={
+            blocks.length === 0 ? (
+              <Text style={{ marginTop: 16, color: "#666" }}>
+                Lisää ensimmäinen tuote yllä.
+              </Text>
+            ) : (
+              <View style={{ height: 12 }} />
+            )
+          }
+        />
+      </NestableScrollContainer>
 
       {/* Kategorian valinta modal (dropdownin “sisältö”) */}
       <Modal
@@ -355,17 +444,17 @@ export default function ShopListScreen() {
               </Pressable>
             </View>
 
-            {/* Ei kategoriaa */}
-            <Pressable onPress={() => pickCategory(null)} style={styles.pickerRow}>
-              <Text style={{ fontWeight: "900" }}>Ei kategoriaa</Text>
-            </Pressable>
-
             {/* Kategoriat */}
             {categories.map((c) => (
               <Pressable key={c.id} onPress={() => pickCategory(c.id)} style={styles.pickerRow}>
                 <Text style={{ fontWeight: "700" }}>{c.name}</Text>
               </Pressable>
             ))}
+
+            {/* Ei kategoriaa */}
+            <Pressable onPress={() => pickCategory(null)} style={styles.pickerRow}>
+              <Text style={{ fontWeight: "900" }}>Ei kategoriaa</Text>
+            </Pressable>
 
             <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
 
@@ -444,7 +533,12 @@ export default function ShopListScreen() {
 const styles = StyleSheet.create({
   container: { padding: 20, flex: 1 },
 
-  topRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 14
+  },
+
   backBtn: {
     width: 36,
     height: 36,
@@ -454,10 +548,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 10,
   },
-  backText: { fontSize: 26, color: "#555", marginTop: -2 },
+
+  backText: {
+    fontSize: 26,
+    color: "#555",
+    marginTop: -2
+  },
+
   headerTitle: { fontSize: 18, fontWeight: "900", flex: 1 },
 
-  addRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
+  addRow: {
+    flexDirection: "row",
+    alignItems: "center", gap: 8,
+    marginBottom: 12
+  },
 
   input: {
     borderWidth: 1,
@@ -465,26 +569,75 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginBottom: 10,
+    backgroundColor: "white",
+    height: 44,
   },
 
   addBtn: {
     backgroundColor: "#7ed957",
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    height: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
     borderRadius: 10,
+    width: 62,
+    flexShrink: 0,
   },
   addBtnText: { color: "white", fontWeight: "900" },
 
-  categorySelect: {
-    width: 150,
+  sectionHeaderRow: {
+    paddingTop: 10,
+    paddingBottom: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  qtyWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#eee",
+    borderRadius: 8,
+  },
+
+  qtyBtn: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#555",
+  },
+
+  qtyText: {
+    width: 18,
+    textAlign: "center",
+    fontWeight: "900",
+  },
+
+  categoryPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    paddingHorizontal: 10,
+    height: 44,
     borderWidth: 1,
     borderColor: "#ddd",
     borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
     backgroundColor: "white",
-    gap: 2,
+    width: 120, // lukittu leveys
+    flexShrink: 0, // ei kutistu liian koskaan sisällön takia
   },
+
+  categoryPillText: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: '#111',
+    flexShrink: 1,
+  },
+
   categorySelectWide: {
     borderWidth: 1,
     borderColor: "#ddd",
@@ -495,7 +648,6 @@ const styles = StyleSheet.create({
     gap: 2,
   },
 
-  sectionHeader: { paddingTop: 10, paddingBottom: 6 },
   sectionTitle: { fontSize: 14, fontWeight: "900", color: "#555" },
 
   itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },

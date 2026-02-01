@@ -1,6 +1,6 @@
 // src/viewmodels/ShopVMContext.tsx, sisältää kaiken Firebase-logiikan
 
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react"
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react"
 import type { User } from "firebase/auth" //tämä on vain tyyppi, voidaan tuoda suoraan tänne, ei Configiin
 
 /**
@@ -52,6 +52,7 @@ export type Category = {
   name: string
   order: number
 }
+
 /* Ostos item, categoryId + order käytetään ostosten drag & drop -järjestelyssä */
 export type ListItem = {
   id: string
@@ -59,6 +60,7 @@ export type ListItem = {
   done: boolean
   categoryId: string | null
   order: number
+  quantity: number
 }
 
 /**
@@ -87,6 +89,7 @@ type ItemDoc = {
   done: boolean
   categoryId: string | null
   order: number
+  quantity: number
   createdAt?: unknown
 }
 
@@ -98,6 +101,20 @@ type ItemDoc = {
 const categoryScopeKey = (storeId: string | null, listId: string) =>
   storeId ? `store:${storeId}` : `list:${listId}`
 
+// Default kategoriat uusille kaupoille
+const DEFAULT_STORE_CATEGORIES = [
+  "Hedelmät & vihannekset",
+  "Maito & kananmunat",
+  "Leipä",
+  "Liha & kala",
+  "Valmisruoka",
+  "Kuivat tuotteet",
+  "Pakasteet",
+  "Juomat",
+  "Makeiset & naposteltavat",
+  "Hygienia",
+  "Koti & siivous",
+]
 
 /*  ViewModelin API: mitä ruudut saavat käyttää */
 
@@ -130,15 +147,21 @@ type VM = {
   // Kategoria + item API (shoplist käyttää näitä)
   subscribeCategoriesForList: (listId: string, storeId: string | null) => () => void
   createCategoryForList: (listId: string, storeId: string | null, name: string) => Promise<void>
+  ensureDefaultStoreCategories: (storeId: string) => Promise<void>
 
   subscribeItems: (listId: string) => () => void
   addItem: (listId: string, name: string, categoryId: string | null) => Promise<void>
   updateItem: (
     listId: string,
     itemId: string,
-    patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order">>
+    patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order" | "quantity">>
   ) => Promise<void>
   deleteItem: (listId: string, itemId: string) => Promise<void>
+
+  // Kategorioiden ja itemien drag & drop -järjestelyyn
+  reorderCategoriesForList: (listId: string, storeId: string | null, nextIds: string[]) => Promise<void>
+  reorderItemsInCategory: (listId: string, categoryId: string | null, nextItemIds: string[]) => Promise<void>
+  changeQuantity: (listId: string, itemId: string, delta: number) => Promise<void>
 
   // Helper: storeId -> storeName
   getStoreName: (storeId: string | null) => string | undefined
@@ -165,6 +188,9 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
   // 3) Kategoriat ja itemit tallennetaan stateihin, joissa on scope key
   const [categoriesByScope, setCategoriesByScope] = useState<Record<string, Category[]>>({})
   const [itemsByListId, setItemsByListId] = useState<Record<string, ListItem[]>>({})
+
+  // 4) Guardataan, että default kategoriat lisätään vain kerran per kauppa
+  const seededStoreIdsRef = useRef<Set<string>>(new Set())
 
   /**
    * AUTH: Anonyymi kirjautuminen.
@@ -323,7 +349,6 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     await deleteDoc(doc(db, "users", uid, "stores", storeId))
   }
 
-
   /*  Actions: LISTAT */
 
   /**
@@ -411,7 +436,6 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       setCategoriesByScope((prev) => ({ ...prev, [key]: next }))
     })
 
-
     return () => {
       unsub()
 
@@ -451,6 +475,49 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     } satisfies CategoryDoc)
   }
 
+  /**
+   * ensureDefaultStoreCategories
+   *
+   * Luo kauppakohtaiset oletuskategoriat Firestoreen VAIN jos:
+   * - listalla on storeId (eli kyseessä on kauppalista)
+   * - kyseisen kaupan categories-kokoelma on vielä tyhjä
+   *
+   * Miksi:
+   * - käyttäjän ei tarvitse lisätä peruskategorioita käsin ensimmäisellä käyttökerralla
+   * - samat kategoriat ovat automaattisesti käytössä kaikissa listoissa, joilla on sama storeId
+   *
+   * Toteutus:
+   * - tarkistaa ensin getDocs(ref), onko kategorioita jo olemassa
+   * - jos ei ole, luo defaultit batchilla (order = index)
+   * - seededStoreIdsRef estää tuplaseedauksen saman app-session aikana
+   */
+  const ensureDefaultStoreCategories = async (storeId: string) => {
+  if (!uid) return
+  if (!storeId) return
+
+  // estä tuplaseedaus tässä app-sessionissa
+  if (seededStoreIdsRef.current.has(storeId)) return
+
+  const ref = collection(db, "users", uid, "stores", storeId, "categories")
+
+  // jos kategorioita on jo, ei tehdä mitään
+  const snap = await getDocs(ref)
+  if (!snap.empty) {
+    seededStoreIdsRef.current.add(storeId)
+    return
+  }
+
+  // luo defaultit batchilla
+  const batch = writeBatch(db)
+  DEFAULT_STORE_CATEGORIES.forEach((name, index) => {
+    const newDoc = doc(ref) // luo docId:n
+    batch.set(newDoc, { name, order: index, createdAt: serverTimestamp() })
+  })
+  await batch.commit()
+
+  seededStoreIdsRef.current.add(storeId)
+}
+
   /* Itemit (elinkaaret) */
   /**
    * subscribeItems:
@@ -481,6 +548,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
                   ? null
                   : null,
             order: typeof data.order === "number" ? data.order : 0,
+            quantity: typeof data.quantity === "number" ? data.quantity : 1,
           }
         })
         .filter((x): x is ListItem => x !== null)
@@ -515,6 +583,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       done: false,
       categoryId: categoryId ?? null,
       order: nextOrder,
+      quantity: 1,
       createdAt: serverTimestamp(),
     } satisfies ItemDoc);
   }
@@ -522,7 +591,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
   const updateItem = async (
     listId: string,
     itemId: string,
-    patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order">>
+    patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order" | "quantity">>
   ) => {
     if (!uid) return
 
@@ -531,6 +600,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     if (patch.done !== undefined) out.done = patch.done
     if (patch.categoryId !== undefined) out.categoryId = patch.categoryId
     if (patch.order !== undefined) out.order = patch.order
+    if (patch.quantity !== undefined) out.quantity = patch.quantity
 
     await updateDoc(doc(db, "users", uid, "lists", listId, "items", itemId), out)
   }
@@ -538,6 +608,91 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
   const deleteItem = async (listId: string, itemId: string) => {
     if (!uid) return;
     await deleteDoc(doc(db, "users", uid, "lists", listId, "items", itemId))
+  }
+
+  const changeQuantity = async (listId: string, itemId: string, delta: number) => {
+    if (!uid) return
+    const current = itemsByListId[listId]?.find((i) => i.id === itemId)
+    const next = Math.max(1, (current?.quantity ?? 1) + delta)
+
+    // Optimoitu UIn päivitys
+    setItemsByListId((prev) => ({
+      ...prev,
+      [listId]: (prev[listId] ?? []).map((it) =>
+        it.id === itemId ? { ...it, quantity: next } : it
+      ),
+    }))
+
+    // firebase päivitys
+    await updateDoc(doc(db, "users", uid, "lists", listId, "items", itemId), { quantity: next })
+  }
+
+  const reorderCategoriesForList = async (listId: string, storeId: string | null, nextIds: string[]) => {
+    if (!uid) return
+    const key = categoryScopeKey(storeId, listId)
+    
+    // optimoitu UIn päivitys: järjestellään cachea
+    setCategoriesByScope((prev) => {
+      const current = prev[key] ?? []
+      const byId = new Map(current.map((c) => [c.id, c]))
+      const next = nextIds.map((id, index) => {
+        const c = byId.get(id)
+        return c ? { ...c, order: index} : null
+      })  
+      .filter((x): x is Category => x !== null )
+
+    return { ...prev, [key]: next }
+    })
+    // firebase päivitys: batch päivitys(chunkataan varmuuden vuoksi)
+    const chunkSize = 450
+    for (let i = 0; i < nextIds.length; i += chunkSize) {
+      const batch = writeBatch(db)
+      nextIds.slice(i, i + chunkSize).forEach((id, localIndex) => {
+        const order = i + localIndex
+        const ref = storeId
+          ? doc(db, "users", uid, "stores", storeId, "categories", id)
+          : doc(db, "users", uid, "lists", listId, "categories", id)
+        batch.update(ref, { order })
+      })
+      await batch.commit()
+    }
+  }
+
+  const reorderItemsInCategory = async (listId: string, categoryId: string | null, nextItemIds: string[]) => {
+    if (!uid) return
+
+    // optimoitu UIn päivitys: päivitetään local-cache samantien
+    setItemsByListId((prev) => {
+      const all = prev[listId] ?? []
+      const catKey = categoryId ?? null
+
+      const inCat = all.filter((it) => it.categoryId === catKey)
+      const outCat = all.filter((it) => it.categoryId !== catKey)
+
+      const byId = new Map(inCat.map((it) => [it.id, it]))
+
+      const nextInCat = nextItemIds.map((id, index) => {
+        const it = byId.get(id)
+        return it ? { ...it, order: index, categoryId: catKey } : null
+      })
+      .filter((x): x is ListItem => x !== null)
+
+      // Yhdistä takaisin: muiden kategorioiden itemit + tämän kategorian uudelleen järjestellyt itemit
+      return { ...prev, [listId]: [...outCat, ...nextInCat] }
+    })
+    // firebase päivitys: batch päivitys (chunkataan varmuuden vuoksi)
+    const chunkSize = 450
+    for (let i = 0; i < nextItemIds.length; i += chunkSize) {
+      const batch = writeBatch(db)
+
+      nextItemIds.slice(i, i + chunkSize).forEach((id, localIndex) => {
+        const order = i + localIndex
+        const ref = doc(db, "users", uid, "lists", listId, "items", id)
+        batch.update(ref, { order, categoryId: categoryId ?? null })
+      })
+
+      await batch.commit()
+    }
   }
 
   /*
@@ -565,6 +720,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       itemsByListId,
       subscribeCategoriesForList,
       createCategoryForList,
+      ensureDefaultStoreCategories,
       subscribeItems,
       addItem,
       updateItem,
@@ -573,6 +729,9 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       deleteStore,
       createList,
       deleteList,
+      reorderCategoriesForList,
+      reorderItemsInCategory,
+      changeQuantity,
       getStoreName,
     }),
     [user, uid, stores, lists, categoriesByScope, itemsByListId]
