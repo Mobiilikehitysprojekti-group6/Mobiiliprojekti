@@ -23,8 +23,6 @@ import {
   doc,
   writeBatch,
 } from "../../firebase/Config"
-import { store } from "expo-router/build/global-state/router-store";
-
 
 /*  Data-tyypit: mitä tietoa talletetaan ja näytetään UI:ssa */
 
@@ -267,7 +265,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsubStores()
       unsubLists()
-    };
+    }
   }, [uid])
 
 
@@ -415,9 +413,9 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
 
     return () => {
-      unsub
-      // tyhjennettän cache kyseisestä scopesta, kun ruutu poistuu
+      unsub()
 
+      // tyhjennettän cache kyseisestä scopesta, kun ruutu poistuu
       setCategoriesByScope((prev) => {
         const copy = { ...prev }
         delete copy[key]

@@ -88,11 +88,6 @@ export default function Home() {
         </Pressable>
       </View>
 
-      {/* Debug: näkyykö uid ja vaihtuuko se reloadissa */}
-      <Text style={{ color: "#666", marginBottom: 8 }}>
-        uid: {uid ?? "ei vielä"}
-      </Text>
-
       {/* Auth-status */}
       {!uid && <Text style={{ color: "#666" }}>Kirjaudutaan anonyymisti…</Text>}
 
