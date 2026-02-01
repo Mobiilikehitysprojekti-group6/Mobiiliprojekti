@@ -45,7 +45,7 @@ export default function ShopListScreen() {
 
   /**
    * Listan perustiedot: haetaan VM:n lists-taulukosta listId:llä.
-   * Tämä pitää UI:n “ohut”: listan nimi ja storeId tulevat yhdestä paikasta.
+   * Tämä pitää UI:n “ohuena”: listan nimi ja storeId tulevat yhdestä paikasta.
    */
   const list = useMemo(
     () => lists.find((l) => l.id === String(listId)),
@@ -109,7 +109,7 @@ export default function ShopListScreen() {
       unsubItems()
       unsubCats()
     }
-  }, [uid, list?.id, list?.storeId])
+  }, [uid, listId, list?.storeId])
 
   /* Varmistus */
   if (!uid) {
@@ -228,7 +228,7 @@ export default function ShopListScreen() {
     setEditName(it.name)
     setEditCategoryId(it.categoryId ?? null)
     setEditVisible(true)
-  };
+  }
 
   // Tallenna edit
   const saveEdit = async () => {
@@ -244,7 +244,7 @@ export default function ShopListScreen() {
 
     setEditVisible(false)
     setEditItem(null)
-  };
+  }
 
   // Lisää uusi kategoria (oikeaan scopeen store/list)
   const createNewCategory = async () => {
