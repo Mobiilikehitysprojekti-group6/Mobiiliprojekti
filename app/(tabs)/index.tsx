@@ -134,7 +134,7 @@ export default function Home() {
             {/* STEP 1: Uusi lista */}
             {modalStep === "createList" && (
               <>
-                <Text style={styles.modalTitle}>Uusi ostoslista</Text>
+                <Text style={styles.modalTitle}>Uusi ostoslista </Text>
 
                 <TextInput
                   style={styles.input}
