@@ -11,5 +11,6 @@ export type Store = {
   postcode: string
   city: string
   brand: string
+  branch: string
   coordinates: Coordinates
 }

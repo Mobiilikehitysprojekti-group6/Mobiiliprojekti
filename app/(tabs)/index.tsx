@@ -201,7 +201,7 @@ export default function Home() {
                         setModalStep("createList")
                       }} 
                     >
-                      <Text style={{ fontWeight: "700" }}>{item.name}</Text>
+                      <Text style={{ fontWeight: "700" }}>{item.name} {item.branch}</Text>
                       </Pressable>
 
                       {selectedStoreId === item.id && <Ionicons name="checkmark" size={18} color="#7ed957" />}

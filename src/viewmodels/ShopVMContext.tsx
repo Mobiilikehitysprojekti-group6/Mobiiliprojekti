@@ -33,6 +33,7 @@ import {
 export type Store = {
   id: string;  // Firestore-dokumentin id
   name: string // Kaupan nimi
+  branch?: string // Kaupan haara (esim. "Keskusta")
 }
 
 /**
@@ -69,6 +70,7 @@ export type ListItem = {
  */
 type StoreDoc = {
   name: string
+  branch?: string
   createdAt?: unknown // serverTimestamp -> voi olla hetkellisesti "pending"
 }
 
@@ -130,7 +132,7 @@ type VM = {
   uid: string | null
 
   // Reaaliaikainen data
-  stores: Store[]
+  stores: Store[] | null
   lists: ShopList[]
 
   // Reaaliaikainen cache shoplist-sivulle
@@ -138,7 +140,7 @@ type VM = {
   itemsByListId: Record<string, ListItem[]>
 
   // Toiminnot (Firestore kirjoitukset)
-  createStore: (name: string) => Promise<void>
+  createStore: (name: string, branch?: string) => Promise<void>
   deleteStore: (storeId: string) => Promise<void>
 
   createList: (name: string, storeId: string | null) => Promise<string | null>
@@ -257,7 +259,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
           if (typeof data.name !== "string") return null
 
-          return { id: d.id, name: data.name }
+          return { id: d.id, name: data.name, branch: data.branch }
         })
         .filter((x): x is Store => x !== null)
 
@@ -301,7 +303,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
    * Luo uusi kauppa:
    * - kirjoittaa users/{uid}/stores kokoelmaan
    */
-  const createStore = async (name: string) => {
+  const createStore = async (name: string, branch?: string) => {
     if (!uid) return
 
     const trimmed = name.trim()
@@ -309,6 +311,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
     await addDoc(collection(db, "users", uid, "stores"), {
       name: trimmed,
+      branch: branch?.trim(),
       createdAt: serverTimestamp(),
     } satisfies StoreDoc)
   }
