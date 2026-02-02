@@ -74,10 +74,10 @@ export default function MapScreen() {
       {selectedStore && (
         <View style={styles.floatingCard} pointerEvents="box-none">
           <View style={styles.card}>
-            <Text style={styles.storeTitle}>{selectedStore.name}</Text>
+            <Text style={styles.storeTitle}>{selectedStore.name} {selectedStore.branch || ""}</Text>
 
             <Text style={styles.address}>
-              {selectedStore.street} {selectedStore.housenumber},{' '}
+              {selectedStore.street} {selectedStore.housenumber}{' '}
               {selectedStore.postcode} {selectedStore.city}
             </Text>
 
