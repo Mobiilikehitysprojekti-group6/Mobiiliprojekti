@@ -259,11 +259,18 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
           if (typeof data.name !== "string") return null
 
-          return { id: d.id, name: data.name, branch: data.branch }
+          return {
+            id: d.id,
+            name: data.name,
+            ...(typeof data.branch === "string"
+              ? { branch: data.branch }
+              : {})
+          }
         })
-        .filter((x): x is Store => x !== null)
+  .filter((x): x is Store => x !== null)
 
-      setStores(next)
+setStores(next)
+
     })
 
 
