@@ -84,10 +84,10 @@ export default function MapScreen() {
             <Pressable
               style={styles.saveStoreButton}
               onPress={async () => {
-                await createStore(selectedStore.name)
+                await createStore(selectedStore.name, selectedStore.branch)
                 Alert.alert(
                   'Kauppa tallennettu!',
-                  `${selectedStore.name} on nyt tallennettu suosikkeihisi.`
+                  `${selectedStore.name} ${selectedStore.branch || ""} on nyt tallennettu suosikkeihisi.`
                 )
               }}
             >

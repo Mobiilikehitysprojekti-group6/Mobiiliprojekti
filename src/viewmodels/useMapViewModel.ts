@@ -58,6 +58,7 @@ export function useMapViewModel() {
           postcode: el.tags?.["addr:postcode"] ?? "",
           city: el.tags?.["addr:city"] ?? "",
           brand: el.tags?.brand,
+          branch: el.tags?.branch ?? "",
           coordinates: {
             latitude: lat,
             longitude: lon,
