@@ -1,13 +1,25 @@
-import React, { useMemo, useState } from "react"
+import React, { useMemo, useRef, useState, useEffect } from "react"
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, Modal, Pressable, Alert } from "react-native"
+import DraggableFlatList from "react-native-draggable-flatlist"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useShopVM } from "../../src/viewmodels/ShopVMContext"
 
 export default function Home() {
   const router = useRouter()
-  const { uid, lists, stores, createList, createStore, deleteList, deleteStore, getStoreName } = useShopVM()
+  const { uid, lists, stores, createList, createStore, deleteList, deleteStore, getStoreName, reorderLists } = useShopVM()
 
+  useEffect(() => {
+  console.log("✅ CURRENT UID:", uid)
+  }, [uid])
+
+  useEffect(() => {
+    console.log("📦 lists length:", lists.length)
+  }, [lists.length])
+
+
+  // Estää dragin kun painetaan roskista
+  const blockRowDragRef = useRef(false)
 
   const [modalVisible, setModalVisible] = useState(false)
   const [modalStep, setModalStep] = useState<"createList" | "pickStore">("createList")
@@ -91,34 +103,60 @@ export default function Home() {
       {/* Auth-status */}
       {!uid && <Text style={{ color: "#666" }}>Kirjaudutaan anonyymisti…</Text>}
 
-      {/* Lists */}
-      <FlatList
+      {/* Ostoslistat, drag&drop järjesty. Tap avaa, long press raahaa */}
+      {/* Ostoslistat: drag&drop järjestys. Tap avaa, long press raahaa */}
+      <DraggableFlatList
         data={lists}
         keyExtractor={(l) => l.id}
-        renderItem={({ item }) => {
+        activationDistance={8}
+        onDragEnd={async ({ data }) => {
+          // ✅ Päivitä järjestys Firestoreen
+          await reorderLists(data.map((x) => x.id))
+        }}
+        renderItem={({ item, drag, isActive }) => {
           const storeName = getStoreName(item.storeId) ?? "Ei kauppaa"
+
           return (
-            <View style={styles.listBlock}>
-              <Pressable
-                style={{ flex: 1 }}
-                onPress={() => router.push({ pathname: "/shoplist", params: { listId: item.id } })}
-              >
+            <Pressable
+              style={[styles.listBlock, isActive && { opacity: 0.9 }]}
+              delayLongPress={150}
+              onLongPress={() => {
+                // ✅ Jos kosketus alkaa roskiksesta, estä drag
+                if (blockRowDragRef.current) return
+                drag()
+              }}
+              onPress={() => {
+                router.push({ pathname: "/shoplist", params: { listId: item.id } })
+              }}
+            >
+              <View style={{ flex: 1 }}>
                 <Text style={styles.listTitle}>{item.name}</Text>
                 <Text style={styles.listSubtitle}>{storeName}</Text>
-              </Pressable>
+              </View>
 
-              <Pressable onPress={() => confirmDeleteList(item.id, item.name)} hitSlop={10} style={styles.iconButton}>
+              {/* ✅ Roskakori: ei aloita dragia */}
+              <Pressable
+                onPressIn={() => (blockRowDragRef.current = true)}
+                onPressOut={() => (blockRowDragRef.current = false)}
+                onPress={() => confirmDeleteList(item.id, item.name)}
+                hitSlop={10}
+                style={styles.iconButton}
+              >
                 <Ionicons name="trash-outline" size={22} color="#e53935" />
               </Pressable>
 
-              <Ionicons name="chevron-forward" size={20} color="#bbb" />
-            </View>
+              {/* ✅ Pieni vihje, että kortti on raahattava */}
+              <Ionicons name="reorder-two" size={18} color="#bbb" />
+            </Pressable>
           )
         }}
         ListEmptyComponent={
-          <Text style={{ marginTop: 20, color: "#666" }}>Luo ensimmäinen lista painamalla +</Text>
+          <Text style={{ marginTop: 20, color: "#666" }}>
+            Luo ensimmäinen lista painamalla +
+          </Text>
         }
       />
+
 
       {/* Modal: Uusi lista */}
       <Modal
@@ -170,13 +208,13 @@ export default function Home() {
                     <Ionicons name="chevron-back" size={18} color="#555" />
                   </Pressable>
                   <Text style={styles.modalTitle}>Valitse kauppa</Text>
-                  <View style={ styles.headerSpacer } />
+                  <View style={styles.headerSpacer} />
                 </View>
 
                 {/* Ei kauppaa */}
                 <View style={styles.storeRow}>
                   <Pressable
-                  style={{ flex:1}}
+                    style={{ flex: 1 }}
                     onPress={() => {
                       setSelectedStoreId(null)
                       setModalStep("createList")
@@ -195,13 +233,13 @@ export default function Home() {
                   renderItem={({ item }) => (
                     <View style={styles.storeRow}>
                       <Pressable
-                      style={{ flex: 1 }}
-                      onPress={() => {
-                        setSelectedStoreId(item.id)
-                        setModalStep("createList")
-                      }} 
-                    >
-                      <Text style={{ fontWeight: "700" }}>{item.name} {item.branch}</Text>
+                        style={{ flex: 1 }}
+                        onPress={() => {
+                          setSelectedStoreId(item.id)
+                          setModalStep("createList")
+                        }}
+                      >
+                        <Text style={{ fontWeight: "700" }}>{item.name} {item.branch}</Text>
                       </Pressable>
 
                       {selectedStoreId === item.id && <Ionicons name="checkmark" size={18} color="#7ed957" />}
@@ -231,10 +269,10 @@ export default function Home() {
                   <Pressable
                     onPress={handleCreateStore}
                     style={[styles.modalButton, !newStoreName.trim() && { opacity: 0.4 }]}
-                    disabled={!newStoreName.trim()} 
+                    disabled={!newStoreName.trim()}
                   >
                     <Text style={{ fontWeight: "900" }}>Lisää</Text>
-                  </Pressable>  
+                  </Pressable>
                 </View>
               </>
             )}
@@ -279,7 +317,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalContent: { backgroundColor: "white", padding: 24, borderRadius: 10, width: "85%" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12,textAlign: "center" },
+  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
 
   input: {
     borderWidth: 1,
@@ -300,7 +338,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   storeRow: { padding: 12, borderRadius: 10, backgroundColor: "#f7f7f7", marginVertical: 6, flexDirection: "row", alignItems: "center" },
-  trashBtn: {padding: 6, borderRadius: 10, marginLeft: 10 },
+  trashBtn: { padding: 6, borderRadius: 10, marginLeft: 10 },
 
   stepHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
   headerSpacer: { width: 32 },

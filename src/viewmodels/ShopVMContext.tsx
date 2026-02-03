@@ -45,6 +45,7 @@ export type ShopList = {
   id: string
   name: string
   storeId: string | null
+  order: number // listojen järjestys etusivulla (drag & drop)
 }
 
 /* Kategoria, jota käytetään kategorioiden drag & drop -järjestelyssä*/
@@ -77,6 +78,7 @@ type StoreDoc = {
 type ListDoc = {
   name: string;
   storeId?: string | null
+  order?: number
   createdAt?: unknown
 }
 
@@ -164,6 +166,9 @@ type VM = {
   reorderCategoriesForList: (listId: string, storeId: string | null, nextIds: string[]) => Promise<void>
   reorderItemsInCategory: (listId: string, categoryId: string | null, nextItemIds: string[]) => Promise<void>
   changeQuantity: (listId: string, itemId: string, delta: number) => Promise<void>
+
+  // etusivun listojen drag & drop -järjestelyyn
+  reorderLists: (nextListIds: string[]) => Promise<void>
 
   // Helper: storeId -> storeName
   getStoreName: (storeId: string | null) => string | undefined
@@ -267,34 +272,46 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
               : {})
           }
         })
-  .filter((x): x is Store => x !== null)
+        .filter((x): x is Store => x !== null)
 
-setStores(next)
-
+      setStores(next)
     })
-
 
     // 2.2) Listat: users/{uid}/lists
     const listsRef = collection(db, "users", uid, "lists")
-    const listsQ = query(listsRef, orderBy("createdAt", "desc"))
+    const listsQ = query(listsRef, orderBy("order", "asc"))
 
-    const unsubLists = onSnapshot(listsQ, (snap) => {
-      const next: ShopList[] = snap.docs
-        .map((d) => {
-          const data = d.data() as Partial<ListDoc>
+    const unsubLists = onSnapshot(
+      listsQ,
+      (snap) => {
+        const next: ShopList[] = snap.docs
+          .map((d) => {
+            const data = d.data() as Partial<ListDoc>
 
-          if (typeof data.name !== "string") return null
+            if (typeof data.name !== "string") return null
 
-          // storeId voi olla string, null tai puuttua -> tulkitaan nulliksi jos puuttuu
-          const storeId =
-            typeof data.storeId === "string" ? data.storeId : data.storeId === null ? null : null
+            // storeId voi olla string, null tai puuttua -> tulkitaan nulliksi jos puuttuu
+            const storeId =
+              typeof data.storeId === "string"
+                ? data.storeId
+                : data.storeId === null
+                  ? null
+                  : null
 
-          return { id: d.id, name: data.name, storeId }
-        })
-        .filter((x): x is ShopList => x !== null)
+            const order = typeof data.order === "number" ? data.order : 0
 
-      setLists(next)
-    })
+            // ✅ muista palauttaa order jos ShopList-tyyppi sisältää sen
+            return { id: d.id, name: data.name, storeId, order }
+          })
+          .filter((x): x is ShopList => x !== null)
+
+        setLists(next)
+      },
+      (err) => {
+        console.error("Lists onSnapshot error:", err)
+      }
+    )
+
 
     // Cleanup: lopetetaan kuuntelijat kun uid vaihtuu tai Provider unmountataan
     return () => {
@@ -372,9 +389,13 @@ setStores(next)
     const trimmed = name.trim()
     if (!trimmed) return null
 
+    const currenMax = lists.reduce((m, l) => Math.max(m, l.order ?? 0), -1)
+    const nextOrder = currenMax + 1
+
     const ref = await addDoc(collection(db, "users", uid, "lists"), {
       name: trimmed,
       storeId: storeId ?? null,
+      order: nextOrder,
       createdAt: serverTimestamp(),
     } satisfies ListDoc)
 
@@ -415,6 +436,16 @@ setStores(next)
 
     // 2) Poista lista
     await deleteDoc(doc(db, "users", uid, "lists", listId))
+  }
+
+  // reordeLists: etusivun listojen drag & drop -järjestelyyn, tallennus firestoreen
+  const reorderLists = async (nextListIds: string[]) => {
+    if (!uid) return
+    const batch = writeBatch(db)
+    nextListIds.forEach((id, idx) => {
+      batch.update(doc(db, "users", uid, "lists", id), { order: idx })
+    })
+    await batch.commit()
   }
 
   /* Kategoriat (elinkaaret) */
@@ -502,31 +533,31 @@ setStores(next)
    * - seededStoreIdsRef estää tuplaseedauksen saman app-session aikana
    */
   const ensureDefaultStoreCategories = async (storeId: string) => {
-  if (!uid) return
-  if (!storeId) return
+    if (!uid) return
+    if (!storeId) return
 
-  // estä tuplaseedaus tässä app-sessionissa
-  if (seededStoreIdsRef.current.has(storeId)) return
+    // estä tuplaseedaus tässä app-sessionissa
+    if (seededStoreIdsRef.current.has(storeId)) return
 
-  const ref = collection(db, "users", uid, "stores", storeId, "categories")
+    const ref = collection(db, "users", uid, "stores", storeId, "categories")
 
-  // jos kategorioita on jo, ei tehdä mitään
-  const snap = await getDocs(ref)
-  if (!snap.empty) {
+    // jos kategorioita on jo, ei tehdä mitään
+    const snap = await getDocs(ref)
+    if (!snap.empty) {
+      seededStoreIdsRef.current.add(storeId)
+      return
+    }
+
+    // luo defaultit batchilla
+    const batch = writeBatch(db)
+    DEFAULT_STORE_CATEGORIES.forEach((name, index) => {
+      const newDoc = doc(ref) // luo docId:n
+      batch.set(newDoc, { name, order: index, createdAt: serverTimestamp() })
+    })
+    await batch.commit()
+
     seededStoreIdsRef.current.add(storeId)
-    return
   }
-
-  // luo defaultit batchilla
-  const batch = writeBatch(db)
-  DEFAULT_STORE_CATEGORIES.forEach((name, index) => {
-    const newDoc = doc(ref) // luo docId:n
-    batch.set(newDoc, { name, order: index, createdAt: serverTimestamp() })
-  })
-  await batch.commit()
-
-  seededStoreIdsRef.current.add(storeId)
-}
 
   /* Itemit (elinkaaret) */
   /**
@@ -640,18 +671,18 @@ setStores(next)
   const reorderCategoriesForList = async (listId: string, storeId: string | null, nextIds: string[]) => {
     if (!uid) return
     const key = categoryScopeKey(storeId, listId)
-    
+
     // optimoitu UIn päivitys: järjestellään cachea
     setCategoriesByScope((prev) => {
       const current = prev[key] ?? []
       const byId = new Map(current.map((c) => [c.id, c]))
       const next = nextIds.map((id, index) => {
         const c = byId.get(id)
-        return c ? { ...c, order: index} : null
-      })  
-      .filter((x): x is Category => x !== null )
+        return c ? { ...c, order: index } : null
+      })
+        .filter((x): x is Category => x !== null)
 
-    return { ...prev, [key]: next }
+      return { ...prev, [key]: next }
     })
     // firebase päivitys: batch päivitys(chunkataan varmuuden vuoksi)
     const chunkSize = 450
@@ -685,7 +716,7 @@ setStores(next)
         const it = byId.get(id)
         return it ? { ...it, order: index, categoryId: catKey } : null
       })
-      .filter((x): x is ListItem => x !== null)
+        .filter((x): x is ListItem => x !== null)
 
       // Yhdistä takaisin: muiden kategorioiden itemit + tämän kategorian uudelleen järjestellyt itemit
       return { ...prev, [listId]: [...outCat, ...nextInCat] }
@@ -742,9 +773,10 @@ setStores(next)
       reorderCategoriesForList,
       reorderItemsInCategory,
       changeQuantity,
+      reorderLists,
       getStoreName,
     }),
-    [user, uid, stores, lists, categoriesByScope, itemsByListId]
+    [user, uid, stores, lists, categoriesByScope, itemsByListId, reorderLists]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
