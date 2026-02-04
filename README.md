@@ -108,12 +108,164 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 ### Asennus
 ```bash
 git clone <repo-url>
-cd <repo>
 npm install
+```
 
+### Firebase-konfigurointi
+1. Luo Firebase-projekti [Firebase Console](https://console.firebase.google.com/)
+2. Ota käyttöön Firestore Database ja Authentication
+3. Lataa konfiguraatiotiedostot:
+   - Android: `google-services.json` → `/android/app/`
+   - iOS: `GoogleService-Info.plist` → `/ios/`
+4. Päivitä Firebase-asetukset tiedostoon `/firebase/Config.ts`
 
+### Sovelluksen käynnistys
+```bash
+# Käynnistä Expo development server
+npx expo start
 
+# Tai käynnistä suoraan laitteelle/emulaattorille:
+npx expo start --android
+npx expo start --ios
+npx expo start --tunnel  # Käytä tunnelia, jos ei samassa verkossa
+```
 
+### Testaus puhelimella
+1. Asenna **Expo Go** -sovellus (iOS: App Store, Android: Google Play)
+2. Skannaa QR-koodi Expo Dev Tools -näkymästä
+3. Sovellus käynnistyy Expo Go:ssa
+
+---
+
+## Ympäristömuuttujat
+
+Sovellus käyttää Firebase-konfiguraatiota tiedostossa `/firebase/Config.ts`. Varmista että seuraavat arvot on asetettu:
+
+```typescript
+export const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+```
+
+**Huom:** Älä tallenna arkaluontoisia tietoja versionhallintaan. Käytä `.gitignore`-tiedostoa suojaamaan konfiguraatiot.
+
+---
+
+## Luvat ja tietosuoja
+
+### Tarvittavat luvat
+- **Sijaintilupa (Location)**: Käytetään "Etsi lähin kauppa" -toiminnossa
+  - iOS: `NSLocationWhenInUseUsageDescription` (`app.json`)
+  - Android: `ACCESS_FINE_LOCATION` ja `ACCESS_COARSE_LOCATION`
+
+### Tietosuojakäytännöt
+- Sijaintitietoa käytetään vain käyttäjän pyynnöstä lähimmän kaupan hakuun
+- Sijaintia ei tallenneta pysyvästi
+- Firebase-autentikointi ja Firestore noudattavat GDPR-vaatimuksia
+- Käyttäjätiedot tallennetaan minimaalisesti (vain tarpeelliset tiedot)
+
+---
+
+## Datamalli (luonnos)
+
+### Firestore-rakenne
+
+```
+users/
+  {userId}/
+    - email: string
+    - displayName: string
+    - createdAt: timestamp
+
+groups/
+  {groupId}/
+    - name: string
+    - ownerId: string
+    - members: string[] (user IDs)
+    - createdAt: timestamp
+    
+    shoppingLists/
+      {listId}/
+        - name: string (esim. "Prisma Keskusta")
+        - storeName?: string
+        - createdAt: timestamp
+        - updatedAt: timestamp
+        
+        categories/
+          {categoryId}/
+            - name: string (esim. "Hedelmät")
+            - order: number
+            
+            items/
+              {itemId}/
+                - name: string
+                - quantity?: string
+                - checked: boolean
+                - addedBy: string (userId)
+                - createdAt: timestamp
+```
+
+### Tärkeät huomiot
+- Käytetään subcollections-rakennetta Firestoressa
+- `order`-kenttä kategorioille mahdollistaa drag & drop -järjestelyn
+- Reaaliaikaiset päivitykset `onSnapshot()`-kuuntelijoilla
+- Poistoissa huomioitava subcollectionien puhdistus
+
+---
+
+## Testaus
+
+### Manuaalinen testaus
+- Testaa sovellusta Expo Go:lla fyysisellä laitteella
+- Testaa offline-tilaa: katkaise internet-yhteys ja tarkista toiminnallisuus
+- Testaa sijaintiominaisuutta eri kauppojen läheisyydessä
+
+### Reaaliaikaisuuden testaus
+1. Avaa sovellus kahdella eri laitteella samalla käyttäjätilillä/ryhmässä
+2. Lisää/muokkaa/poista tuotteita yhdellä laitteella
+3. Varmista että muutokset näkyvät välittömästi toisella laitteella
+
+### Testauskattavuus
+*(Täydennetään myöhemmin kun automatisoidut testit on toteutettu)*
+- Unit-testit: Jest + React Native Testing Library
+- E2E-testit: Detox tai Maestro *(suunnitteilla)*
+
+---
+
+## Roadmap
+
+### MVP (Minimum Viable Product) - Valmis
+- ✅ Firebase-integraatio (Firestore, Authentication)
+- ✅ Ryhmien luonti ja hallinta
+- ✅ Kauppalistojen CRUD-toiminnot
+- ✅ Kategoriat ja tuotteet
+- ✅ Reaaliaikainen synkronointi
+- ✅ Perus-UI/UX
+
+### Lähitulevaisuus
+- 🔄 Tuotehistoria ja usein ostetut tuotteet
+- 🔄 Dark Mode
+- 🔄 Drag & drop kategorioiden järjestelyyn
+- 🔄 Push-notifikaatiot ryhmän jäsenille
+- 🔄 Ostoshistorian analytiikka ja tilastot
+
+---
+
+## Tiimi & työnjako
+
+### Tiimi
+*Ryhmä 6 - Mobiilikehitysprojekti*
+
+### Työnjako
+- **Frontend/UI**: React Native -komponentit, navigointi, käyttöliittymä
+- **Backend/Firebase**: Firestore-rakenne, autentikointi, reaaliaikaisuus
+- **Kartta/GPS**: Expo Location, Overpass API -integraatio
+- **Testaus**: Manuaalinen testaus, testaussuunnitelma
 
 
 
