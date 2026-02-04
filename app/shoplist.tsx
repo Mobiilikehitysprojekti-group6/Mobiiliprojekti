@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useRef, useState } from "react"
 import {
   View,
   Text,
@@ -34,6 +34,9 @@ export default function ShopListScreen() {
   // Huom! Ei laiteta stylesheettiin, koska riippuvat runtime-näytön leveydestä
   const addWidth = Math.max(60, Math.min(78, Math.round(width * 0.13)))
   const catWidth = Math.max(115, Math.min(180, Math.round(width * 0.28)))
+
+  // Estetään drag quantity/roskis/checkbox kohdalta
+  const blockRowDragRef = useRef(false)
 
   const {
     uid,
@@ -302,7 +305,7 @@ export default function ShopListScreen() {
       {/* Add row: Tuote + Kategoria dropdown + Lisää */}
       <View style={styles.addRow}>
         <TextInput
-          style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0 }]}
+          style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0, fontWeight: "700" }]}
           placeholder="Tuote"
           value={newItemName}
           onChangeText={setNewItemName}
@@ -329,6 +332,7 @@ export default function ShopListScreen() {
       {/* Tuotteet (drag&drop): kategoriat + tuotteet saman sivun sisällä */}
       <NestableScrollContainer contentContainerStyle={{ paddingBottom: 24 }}>
         <NestableDraggableFlatList
+          activationDistance={8}
           data={blocks}
           keyExtractor={(b) => String(b.id ?? "__none__")}
           // tärkeä: ulompi lista ei scrollaa itse, scroll container hoitaa
@@ -340,22 +344,20 @@ export default function ShopListScreen() {
           }}
           renderItem={({ item: block, drag, isActive }) => (
             <View style={{ paddingTop: 10 }}>
-              {/* Kategoria-otsikko + drag-handle */}
-              <View style={styles.sectionHeaderRow}>
+              {/* Kategoria-otsikko: koko rivi on dragattava (paitsi "Ei kategoriaa") */}
+              <Pressable
+                style={styles.sectionHeaderRow}
+                onLongPress={block.id !== null ? drag : undefined}
+                delayLongPress={150}
+                disabled={isActive || block.id === null}
+              >
                 <Text style={styles.sectionTitle}>{block.name}</Text>
+              </Pressable>
 
-                {block.id !== null ? (
-                  <Pressable onLongPress={drag} disabled={isActive} hitSlop={10}>
-                    <Ionicons name="reorder-three" size={22} color="#666" />
-                  </Pressable>
-                ) : (
-                  // Ei kategoriaa: ei drag-handlea kategorian tasolla
-                  <View style={{ width: 22 }} />
-                )}
-              </View>
 
               {/* Tuotteet draggable tässä kategoriassa */}
               <NestableDraggableFlatList
+                activationDistance={8}
                 data={block.items}
                 keyExtractor={(it) => it.id}
                 scrollEnabled={false}
@@ -369,36 +371,64 @@ export default function ShopListScreen() {
                   </Text>
                 }
                 renderItem={({ item, drag: dragItem, isActive: itemActive }) => (
-                  <View style={[styles.itemRow, itemActive && { opacity: 0.85 }]}>
-                    {/* item drag handle */}
-                    <Pressable onLongPress={dragItem} disabled={itemActive} hitSlop={10}>
-                      <Ionicons name="reorder-two" size={18} color="#888" />
-                    </Pressable>
-
-                    <Pressable onPress={() => toggleDone(item)} style={styles.checkbox} hitSlop={10}>
+                  <View style={[styles.itemRow, itemActive && styles.dragActive ]}>
+                    {/* Checkbox: tap = toggle, long press = drag */}
+                    <Pressable
+                      onPress={() => toggleDone(item)}
+                      onLongPress={() => {
+                        // Drag sallittu vain jos ei olla painettu qty/roskista
+                        if (blockRowDragRef.current) return
+                        dragItem()
+                      }}
+                      delayLongPress={150}
+                      disabled={itemActive}
+                      style={styles.checkbox}
+                      hitSlop={10}
+                    >
                       <Text style={{ fontSize: 20 }}>{item.done ? "✔" : "□"}</Text>
                     </Pressable>
 
-                    {/* Painamalla nimeä avaat muokkauksen */}
-                    <Pressable onPress={() => openEdit(item)} style={{ flex: 1 }}>
+                    {/* Nimi: tap = edit, long press = drag */}
+                    <Pressable
+                      onPress={() => openEdit(item)}
+                      onLongPress={() => {
+                        if (blockRowDragRef.current) return
+                        dragItem()
+                      }}
+                      delayLongPress={150}
+                      disabled={itemActive}
+                      style={{ flex: 1 }}
+                    >
                       <Text style={[styles.itemText, item.done && styles.itemDone]}>{item.name}</Text>
                     </Pressable>
 
-                    {/* quantity stepper */}
+                    {/* quantity stepper: estää dragin kun tätä painetaan */}
                     <View style={styles.qtyWrap}>
-                      <Pressable onPress={() => changeQuantity(list.id, item.id, -1)} hitSlop={10}>
+                      <Pressable
+                        onPressIn={() => (blockRowDragRef.current = true)}  // ✅ estä drag
+                        onPressOut={() => (blockRowDragRef.current = false)} // ✅ vapauta
+                        onPress={() => changeQuantity(list.id, item.id, -1)}
+                        hitSlop={10}
+                      >
                         <Text style={styles.qtyBtn}>−</Text>
                       </Pressable>
 
                       <Text style={styles.qtyText}>{item.quantity ?? 1}</Text>
 
-                      <Pressable onPress={() => changeQuantity(list.id, item.id, +1)} hitSlop={10}>
+                      <Pressable
+                        onPressIn={() => (blockRowDragRef.current = true)}   // ✅ estä drag
+                        onPressOut={() => (blockRowDragRef.current = false)} // ✅ vapauta
+                        onPress={() => changeQuantity(list.id, item.id, +1)}
+                        hitSlop={10}
+                      >
                         <Text style={styles.qtyBtn}>+</Text>
                       </Pressable>
                     </View>
 
-                    {/* Roskakori */}
+                    {/* Roskakori: estää dragin kun tätä painetaan */}
                     <Pressable
+                      onPressIn={() => (blockRowDragRef.current = true)}    // ✅ estä drag
+                      onPressOut={() => (blockRowDragRef.current = false)}  // ✅ vapauta
                       onPress={() =>
                         Alert.alert("Poistetaanko tuote?", `"${item.name}" poistetaan.`, [
                           { text: "Peruuta", style: "cancel" },
@@ -651,8 +681,15 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 14, fontWeight: "900", color: "#555" },
 
   itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },
+  dragActive: {
+    transform: [{ scale: 1.02 }],
+    elevation: 3,
+    shadowOpacity: 0.12,
+    shadowRadius: 6
+  },
   checkbox: { padding: 4 },
-  itemText: { fontSize: 16, fontWeight: "800" },
+  itemText: {
+    fontSize: 16, fontWeight: "800" },
   itemDone: { textDecorationLine: "line-through", color: "#888" },
 
   iconButton: { padding: 6, borderRadius: 10 },
