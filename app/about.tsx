@@ -2,8 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useTheme } from "../src/viewmodels/ThemeContext";
 
 export default function AboutScreen() {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -96,81 +99,82 @@ export default function AboutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  header: {
-    backgroundColor: '#d3d3d3',
-    padding: 20,
-  },
-  backButton: {
-    marginBottom: 10,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    letterSpacing: 2,
-    textAlign: 'center',
-  },
-  content: {
-    padding: 20,
-  },
-  appName: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  version: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  section: {
-    marginBottom: 25,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  text: {
-    fontSize: 16,
-    color: '#555',
-    lineHeight: 24,
-    marginBottom: 5,
-  },
-  linkButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-  linkButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  footer: {
-    textAlign: 'center',
-    color: '#999',
-    fontSize: 14,
-    marginTop: 20,
-    marginBottom: 40,
-  },
-});
+const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+    },
+    header: {
+      backgroundColor: colors.background,
+      padding: 20,
+    },
+    backButton: {
+      marginBottom: 10,
+    },
+    backButtonText: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      letterSpacing: 2,
+      textAlign: 'center',
+    },
+    content: {
+      padding: 20,
+    },
+    appName: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: colors.text,
+      textAlign: 'center',
+      marginBottom: 5,
+    },
+    version: {
+      fontSize: 16,
+      color: colors.secondaryText,
+      textAlign: 'center',
+      marginBottom: 30,
+    },
+    section: {
+      marginBottom: 25,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 10,
+    },
+    text: {
+      fontSize: 16,
+      color: colors.secondaryText,
+      lineHeight: 24,
+      marginBottom: 5,
+    },
+    linkButton: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: 20,
+      paddingVertical: 12,
+      borderRadius: 8,
+      marginTop: 10,
+      alignSelf: 'flex-start',
+    },
+    linkButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    footer: {
+      textAlign: 'center',
+      color: colors.secondaryText,
+      fontSize: 14,
+      marginTop: 20,
+      marginBottom: 40,
+    },
+  });

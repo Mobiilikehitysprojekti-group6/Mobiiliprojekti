@@ -11,15 +11,18 @@ import {
   Pressable,
   ScrollView,
   Modal,
-  Image
+  Image,
+  Switch
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from 'expo-image-picker'; //Kuva valitaan gallerian kautta
 import { router } from "expo-router";
 import { useShopVM } from "../../src/viewmodels/ShopVMContext";
 import { db, doc, setDoc, getDoc } from "../../firebase/Config";
+import { useTheme } from "../../src/viewmodels/ThemeContext";
 
 export default function ProfileScreen() {
+  const { colors, mode, toggle } = useTheme();
   // Haetaan uid ShopVMContextista (anonyymi Firebase Auth)
   const { uid } = useShopVM();
   
@@ -35,6 +38,8 @@ export default function ProfileScreen() {
   
   // Ref input-kentälle, jotta voidaan fokussoida se modalin avautuessa
   const inputRef = useRef<TextInput>(null);
+
+  const styles = createStyles(colors);
 
   // Lataa käyttäjänimi Firestoresta kun uid on saatavilla
   useEffect(() => {
@@ -178,6 +183,16 @@ export default function ProfileScreen() {
           <Pressable style={styles.statisticsButton} onPress={() => router.push('/statistics')}>
             <Text style={styles.statisticsButtonText}>Statistiikka</Text>
           </Pressable>
+
+           <View style={styles.themeRow}>
+            <Text style={styles.themeLabel}>Teema: {mode === "dark" ? "Tumma" : "Vaalea"}</Text>
+            <Switch
+              value={mode === "dark"}
+              onValueChange={toggle}
+              trackColor={{ false: "#767577", true: colors.accent }}
+              thumbColor={mode === "dark" ? "white" : "#f4f3f4"}
+            />
+          </View>
           
           <Pressable style={styles.aboutButton} onPress={() => router.push('/about')}>
             <Text style={styles.aboutButtonText}>Tietoja sovelluksesta</Text>
@@ -210,6 +225,7 @@ export default function ProfileScreen() {
                 ref={inputRef}
                 style={styles.input}
                 placeholder="Käyttäjänimi"
+                placeholderTextColor={colors.secondaryText}
                 value={username}
                 onChangeText={setUsername}
               />
@@ -231,162 +247,181 @@ export default function ProfileScreen() {
   );
 }
 
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  header: {
-    backgroundColor: '#d3d3d3',
-    padding: 20,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    letterSpacing: 2,
-  },
-  profileSection: {
-    alignItems: 'center',
-    paddingVertical: 30,
-  },
-  profilePicture: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#c0c0c0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-    overflow: 'hidden',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  profileInitial: {
-    fontSize: 48,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  changePictureText: {
-    fontSize: 12,
-    color: '#888',
-    marginBottom: 15,
-  },
-  usernameDisplay: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 10,
-  },
-  editButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 15,
-  },
-  editButtonText: {
-    fontSize: 14,
-    color: '#555',
-  },
-  statisticsButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#e8f5e9',
-    borderRadius: 15,
-    marginTop: 10,
-  },
-  statisticsButtonText: {
-    fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '600',
-  },
-  aboutButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 15,
-    marginTop: 10,
-  },
-  aboutButtonText: {
-    fontSize: 14,
-    color: '#777',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    backgroundColor: '#d3d3d3',
-    padding: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  modalForm: {
-    padding: 30,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    letterSpacing: 1,
-  },
-  input: {
-    backgroundColor: '#d3d3d3',
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#999',
-    borderRadius: 25,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  cancelButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: '#4CAF50',
-    borderRadius: 25,
-    paddingVertical: 15,
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
+const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+    },
+    header: {
+      backgroundColor: colors.background,
+      padding: 20,
+      alignItems: 'center',
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      letterSpacing: 2,
+    },
+    profileSection: {
+      alignItems: 'center',
+      paddingVertical: 30,
+    },
+    profilePicture: {
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+      backgroundColor: colors.secondaryText,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 10,
+      overflow: 'hidden',
+    },
+    profileImage: {
+      width: '100%',
+      height: '100%',
+    },
+    profileInitial: {
+      fontSize: 48,
+      color: colors.text,
+      fontWeight: 'bold',
+    },
+    changePictureText: {
+      fontSize: 12,
+      color: colors.secondaryText,
+      marginBottom: 15,
+    },
+    themeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginBottom: 0,
+      marginTop: 10,
+      background: colors.background,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: 20,
+    },
+    themeLabel: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    usernameDisplay: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 10,
+    },
+    editButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      backgroundColor: colors.accent,
+      borderRadius: 15,
+    },
+    editButtonText: {
+      fontSize: 14,
+      color: '#fff',
+      fontWeight: '600',
+    },
+    statisticsButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      backgroundColor: colors.accent,
+      borderRadius: 15,
+      marginTop: 10,
+    },
+    statisticsButtonText: {
+      fontSize: 14,
+      color: '#fff',
+      fontWeight: '600',
+    },
+    aboutButton: {
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      backgroundColor: colors.secondaryText,
+      borderRadius: 15,
+      marginTop: 10,
+    },
+    aboutButtonText: {
+      fontSize: 14,
+      color: "white",
+    },
+    modalContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+      width: '90%',
+      backgroundColor: colors.background,
+      borderRadius: 20,
+      overflow: 'hidden',
+    },
+    modalHeader: {
+      backgroundColor: colors.background,
+      padding: 20,
+      alignItems: 'center',
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    modalForm: {
+      padding: 30,
+    },
+    label: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 15,
+      letterSpacing: 1,
+    },
+    input: {
+      backgroundColor: colors.background,
+      borderRadius: 25,
+      paddingHorizontal: 20,
+      paddingVertical: 15,
+      marginBottom: 15,
+      fontSize: 16,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      gap: 10,
+    },
+    cancelButton: {
+      flex: 1,
+      backgroundColor: colors.secondaryText,
+      borderRadius: 25,
+      paddingVertical: 15,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    cancelButtonText: {
+      color: colors.text,
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    saveButton: {
+      flex: 1,
+      backgroundColor: colors.accent,
+      borderRadius: 25,
+      paddingVertical: 15,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    saveButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+  });

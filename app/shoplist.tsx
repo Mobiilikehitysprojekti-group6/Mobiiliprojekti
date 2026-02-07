@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { NestableScrollContainer, NestableDraggableFlatList } from "react-native-draggable-flatlist"
 
 import { useShopVM, ListItem, Category } from "../src/viewmodels/ShopVMContext"
+import { useTheme } from "../src/viewmodels/ThemeContext"
 
 /**
  * ScopeKey kertoo mistä kategoriat haetaan:
@@ -27,6 +28,7 @@ const scopeKey = (storeId: string | null, listId: string) =>
   storeId ? `store:${storeId}` : `list:${listId}`
 
 export default function ShopListScreen() {
+  const { colors } = useTheme()
   const router = useRouter()
   const { listId } = useLocalSearchParams<{ listId: string }>()
   const { width } = useWindowDimensions()
@@ -55,6 +57,8 @@ export default function ShopListScreen() {
     reorderItemsInCategory,
     changeQuantity,
   } = useShopVM()
+
+  const styles = createStyles(colors)
 
   /**
    * Listan perustiedot: haetaan VM:n lists-taulukosta listId:llä.
@@ -132,7 +136,7 @@ export default function ShopListScreen() {
   if (!uid) {
     return (
       <View style={styles.container}>
-        <Text style={{ color: "#666" }}>Kirjaudutaan…</Text>
+        <Text style={{ color: colors.secondaryText }}>Kirjaudutaan…</Text>
       </View>
     )
   }
@@ -140,9 +144,9 @@ export default function ShopListScreen() {
   if (!list) {
     return (
       <View style={styles.container}>
-        <Text style={{ fontWeight: "900" }}>Listaa ei löytynyt.</Text>
+        <Text style={{ fontWeight: "900", color: colors.text }}>Listaa ei löytynyt.</Text>
         <Pressable onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text style={{ color: "#7ed957", fontWeight: "900" }}>Takaisin</Text>
+          <Text style={{ color: colors.accent, fontWeight: "900" }}>Takaisin</Text>
         </Pressable>
       </View>
     )
@@ -307,6 +311,7 @@ export default function ShopListScreen() {
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0, fontWeight: "700" }]}
           placeholder="Tuote"
+          placeholderTextColor={colors.secondaryText}
           value={newItemName}
           onChangeText={setNewItemName}
         />
@@ -314,12 +319,12 @@ export default function ShopListScreen() {
         {/* Kategoria dropdown */}
         <Pressable onPress={openPickerForNew} style={[styles.categoryPill, { width: catWidth }]}>
           <Text
-            style={[styles.categoryPillText, !selectedCategoryId && { color: "#888", fontWeight: "700" }]}
+            style={[styles.categoryPillText, !selectedCategoryId && { color: colors.secondaryText, fontWeight: "700" }]}
             numberOfLines={1}
           >
             {selectedCategoryLabel}
           </Text>
-          <Ionicons name="chevron-down" size={16} color="#666" />
+          <Ionicons name="chevron-down" size={16} color={colors.secondaryText} />
         </Pressable>
 
 
@@ -366,7 +371,7 @@ export default function ShopListScreen() {
                   await reorderItemsInCategory(list.id, block.id, nextItemIds)
                 }}
                 ListEmptyComponent={
-                  <Text style={{ color: "#888", marginBottom: 6 }}>
+                  <Text style={{ color: colors.secondaryText, marginBottom: 6 }}>
                     (Ei tuotteita)
                   </Text>
                 }
@@ -385,7 +390,7 @@ export default function ShopListScreen() {
                       style={styles.checkbox}
                       hitSlop={10}
                     >
-                      <Text style={{ fontSize: 20 }}>{item.done ? "✔" : "□"}</Text>
+                      <Text style={{ fontSize: 20, color: colors.text }}>{item.done ? "✔" : "□"}</Text>
                     </Pressable>
 
                     {/* Nimi: tap = edit, long press = drag */}
@@ -447,7 +452,7 @@ export default function ShopListScreen() {
           )}
           ListFooterComponent={
             blocks.length === 0 ? (
-              <Text style={{ marginTop: 16, color: "#666" }}>
+              <Text style={{ marginTop: 16, color: colors.secondaryText }}>
                 Lisää ensimmäinen tuote yllä.
               </Text>
             ) : (
@@ -470,28 +475,28 @@ export default function ShopListScreen() {
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Text style={styles.modalTitle}>Valitse kategoria</Text>
               <Pressable onPress={() => setPickerOpen(false)} hitSlop={10}>
-                <Ionicons name="close" size={22} color="#555" />
+                <Ionicons name="close" size={22} color={colors.text} />
               </Pressable>
             </View>
 
             {/* Kategoriat */}
             {categories.map((c) => (
               <Pressable key={c.id} onPress={() => pickCategory(c.id)} style={styles.pickerRow}>
-                <Text style={{ fontWeight: "700" }}>{c.name}</Text>
+                <Text style={{ fontWeight: "700", color: colors.text }}>{c.name}</Text>
               </Pressable>
             ))}
 
             {/* Ei kategoriaa */}
             <Pressable onPress={() => pickCategory(null)} style={styles.pickerRow}>
-              <Text style={{ fontWeight: "900" }}>Ei kategoriaa</Text>
+              <Text style={{ fontWeight: "900", color: colors.text }}>Ei kategoriaa</Text>
             </Pressable>
 
-            <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
+            <View style={{ height: 1, backgroundColor: colors.secondaryText, marginVertical: 12, opacity: 0.3 }} />
 
             {/* Lisää uusi kategoria -kohta */}
             {!addingCategory ? (
               <Pressable onPress={() => setAddingCategory(true)} style={styles.pickerRow}>
-                <Text style={{ fontWeight: "900", color: "#7ed957" }}>
+                <Text style={{ fontWeight: "900", color: colors.accent }}>
                   + Lisää uusi kategoria
                 </Text>
               </Pressable>
@@ -500,15 +505,16 @@ export default function ShopListScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Uuden kategorian nimi"
+                  placeholderTextColor={colors.secondaryText}
                   value={newCategoryName}
                   onChangeText={setNewCategoryName}
                 />
                 <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
                   <Pressable onPress={() => setAddingCategory(false)} style={styles.modalButton}>
-                    <Text>Peruuta</Text>
+                    <Text style={{ color: colors.text }}>Peruuta</Text>
                   </Pressable>
                   <Pressable onPress={createNewCategory} style={styles.modalButton}>
-                    <Text style={{ fontWeight: "900" }}>Lisää</Text>
+                    <Text style={{ fontWeight: "900", color: colors.text }}>Lisää</Text>
                   </Pressable>
                 </View>
               </>
@@ -532,25 +538,26 @@ export default function ShopListScreen() {
             <TextInput
               style={styles.input}
               placeholder="Tuote"
+              placeholderTextColor={colors.secondaryText}
               value={editName}
               onChangeText={setEditName}
             />
 
             {/* Editissäkin käytetään samaa dropdownia */}
             <Pressable onPress={openPickerForEdit} style={styles.categorySelectWide}>
-              <Text style={{ color: "#666" }}>Kategoria</Text>
-              <Text style={{ fontWeight: "900" }} numberOfLines={1}>
+              <Text style={{ color: colors.secondaryText }}>Kategoria</Text>
+              <Text style={{ fontWeight: "900", color: colors.text }} numberOfLines={1}>
                 {editCategoryName}
               </Text>
-              <Ionicons name="chevron-down" size={16} color="#666" />
+              <Ionicons name="chevron-down" size={16} color={colors.secondaryText} />
             </Pressable>
 
             <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
               <Pressable onPress={() => setEditVisible(false)} style={styles.modalButton}>
-                <Text>Peruuta</Text>
+                <Text style={{ color: colors.text }}>Peruuta</Text>
               </Pressable>
               <Pressable onPress={saveEdit} style={styles.modalButton}>
-                <Text style={{ fontWeight: "900" }}>Tallenna</Text>
+                <Text style={{ fontWeight: "900", color: colors.text }}>Tallenna</Text>
               </Pressable>
             </View>
           </View>
@@ -560,149 +567,154 @@ export default function ShopListScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1 },
+const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+  StyleSheet.create({
+    container: { padding: 20, flex: 1, backgroundColor: colors.background },
 
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 14
-  },
+    topRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 14
+    },
 
-  backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#f2f2f2",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 10,
-  },
+    backBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 10,
+    },
 
-  backText: {
-    fontSize: 26,
-    color: "#555",
-    marginTop: -2
-  },
+    backText: {
+      fontSize: 26,
+      color: colors.text,
+      marginTop: -2
+    },
 
-  headerTitle: { fontSize: 18, fontWeight: "900", flex: 1 },
+    headerTitle: { fontSize: 18, fontWeight: "900", flex: 1, color: colors.text },
 
-  addRow: {
-    flexDirection: "row",
-    alignItems: "center", gap: 8,
-    marginBottom: 12
-  },
+    addRow: {
+      flexDirection: "row",
+      alignItems: "center", gap: 8,
+      marginBottom: 12
+    },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    backgroundColor: "white",
-    height: 44,
-  },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      padding: 10,
+      borderRadius: 10,
+      marginBottom: 10,
+      backgroundColor: colors.background,
+      height: 44,
+      color: colors.text,
+    },
 
-  addBtn: {
-    backgroundColor: "#7ed957",
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    width: 62,
-    flexShrink: 0,
-  },
-  addBtnText: { color: "white", fontWeight: "900" },
+    addBtn: {
+      backgroundColor: colors.accent,
+      height: 44,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 10,
+      borderRadius: 10,
+      width: 62,
+      flexShrink: 0,
+    },
+    addBtnText: { color: "white", fontWeight: "900" },
 
-  sectionHeaderRow: {
-    paddingTop: 10,
-    paddingBottom: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+    sectionHeaderRow: {
+      paddingTop: 10,
+      paddingBottom: 6,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
 
-  qtyWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: "#eee",
-    borderRadius: 8,
-  },
+    qtyWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      paddingHorizontal: 8,
+      paddingVertical: 4,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      borderRadius: 8,
+    },
 
-  qtyBtn: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#555",
-  },
+    qtyBtn: {
+      fontSize: 18,
+      fontWeight: "900",
+      color: colors.text,
+    },
 
-  qtyText: {
-    width: 18,
-    textAlign: "center",
-    fontWeight: "900",
-  },
+    qtyText: {
+      width: 18,
+      textAlign: "center",
+      fontWeight: "900",
+      color: colors.text,
+    },
 
-  categoryPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-    paddingHorizontal: 10,
-    height: 44,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    backgroundColor: "white",
-    width: 120, // lukittu leveys
-    flexShrink: 0, // ei kutistu liian koskaan sisällön takia
-  },
+    categoryPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      paddingHorizontal: 10,
+      height: 44,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      borderRadius: 10,
+      backgroundColor: colors.background,
+      width: 120, // lukittu leveys
+      flexShrink: 0, // ei kutistu liian koskaan sisällön takia
+    },
 
-  categoryPillText: {
-    fontSize: 14,
-    fontWeight: "900",
-    color: '#111',
-    flexShrink: 1,
-  },
+    categoryPillText: {
+      fontSize: 14,
+      fontWeight: "900",
+      color: colors.text,
+      flexShrink: 1,
+    },
 
-  categorySelectWide: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 10,
-    backgroundColor: "white",
-    marginBottom: 10,
-    gap: 2,
-  },
+    categorySelectWide: {
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      borderRadius: 10,
+      padding: 10,
+      backgroundColor: colors.background,
+      marginBottom: 10,
+      gap: 2,
+    },
 
-  sectionTitle: { fontSize: 14, fontWeight: "900", color: "#555" },
+    sectionTitle: { fontSize: 14, fontWeight: "900", color: colors.secondaryText },
 
-  itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },
-  dragActive: {
-    transform: [{ scale: 1.02 }],
-    elevation: 3,
-    shadowOpacity: 0.12,
-    shadowRadius: 6
-  },
-  checkbox: { padding: 4 },
-  itemText: {
-    fontSize: 16, fontWeight: "800" },
-  itemDone: { textDecorationLine: "line-through", color: "#888" },
+    itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },
+    dragActive: {
+      transform: [{ scale: 1.02 }],
+      elevation: 3,
+      shadowOpacity: 0.12,
+      shadowRadius: 6
+    },
+    checkbox: { padding: 4 },
+    itemText: {
+      fontSize: 16, fontWeight: "800", color: colors.text },
+    itemDone: { textDecorationLine: "line-through", color: colors.secondaryText },
 
-  iconButton: { padding: 6, borderRadius: 10 },
+    iconButton: { padding: 6, borderRadius: 10 },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: { backgroundColor: "white", padding: 24, borderRadius: 10, width: "85%" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
-  modalButton: { marginLeft: 16, marginTop: 12 },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.3)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: { backgroundColor: colors.background, padding: 24, borderRadius: 10, width: "85%", borderWidth: 1, borderColor: colors.secondaryText },
+    modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center", color: colors.text },
+    modalButton: { marginLeft: 16, marginTop: 12 },
 
-  pickerRow: { paddingVertical: 10 },
-})
+    pickerRow: { paddingVertical: 10 },
+  })
