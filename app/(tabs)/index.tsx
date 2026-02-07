@@ -4,10 +4,14 @@ import DraggableFlatList from "react-native-draggable-flatlist"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useShopVM } from "../../src/viewmodels/ShopVMContext"
+import { useTheme } from "../../src/viewmodels/ThemeContext"
 
 export default function Home() {
+  const { colors } = useTheme()
   const router = useRouter()
   const { uid, lists, stores, createList, createStore, deleteList, deleteStore, getStoreName, reorderLists } = useShopVM()
+
+  const styles = createStyles(colors)
 
   useEffect(() => {
   console.log("✅ CURRENT UID:", uid)
@@ -101,7 +105,7 @@ export default function Home() {
       </View>
 
       {/* Auth-status */}
-      {!uid && <Text style={{ color: "#666" }}>Kirjaudutaan anonyymisti…</Text>}
+      {!uid && <Text style={{ color: colors.secondaryText }}>Kirjaudutaan anonyymisti…</Text>}
 
       {/* Ostoslistat, drag&drop järjesty. Tap avaa, long press raahaa */}
       {/* Ostoslistat: drag&drop järjestys. Tap avaa, long press raahaa */}
@@ -146,12 +150,12 @@ export default function Home() {
               </Pressable>
 
               {/* ✅ Pieni vihje, että kortti on raahattava */}
-              <Ionicons name="reorder-two" size={18} color="#bbb" />
+              <Ionicons name="reorder-two" size={18} color={colors.secondaryText} />
             </Pressable>
           )
         }}
         ListEmptyComponent={
-          <Text style={{ marginTop: 20, color: "#666" }}>
+          <Text style={{ marginTop: 20, color: colors.secondaryText }}>
             Luo ensimmäinen lista painamalla +
           </Text>
         }
@@ -177,24 +181,25 @@ export default function Home() {
                 <TextInput
                   style={styles.input}
                   placeholder="Listan nimi"
+                  placeholderTextColor={colors.secondaryText}
                   value={newListName}
                   onChangeText={setNewListName}
                 />
 
                 <Pressable onPress={() => setModalStep("pickStore")} style={styles.storePicker}>
-                  <Text style={{ fontWeight: "700" }}>Kauppa:</Text>
-                  <Text style={{ marginLeft: 8, flex: 1 }} numberOfLines={1}>
+                  <Text style={{ fontWeight: "700", color: colors.text }}>Kauppa:</Text>
+                  <Text style={{ marginLeft: 8, flex: 1, color: colors.text }} numberOfLines={1}>
                     {selectedStoreLabel}
                   </Text>
-                  <Text style={{ color: "#7ed957", fontWeight: "900" }}>Vaihda</Text>
+                  <Text style={{ color: colors.accent, fontWeight: "900" }}>Vaihda</Text>
                 </Pressable>
 
                 <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
                   <Pressable onPress={closeModal} style={[styles.modalButton, !uid && { opacity: 0.4 }]} disabled={!uid}>
-                    <Text>Peruuta</Text>
+                    <Text style={{ color: colors.text }}>Peruuta</Text>
                   </Pressable>
                   <Pressable onPress={handleCreateList} style={styles.modalButton}>
-                    <Text style={{ fontWeight: "900" }}>Luo</Text>
+                    <Text style={{ fontWeight: "900", color: colors.text }}>Luo</Text>
                   </Pressable>
                 </View>
               </>
@@ -205,7 +210,7 @@ export default function Home() {
               <>
                 <View style={styles.stepHeader}>
                   <Pressable onPress={() => setModalStep("createList")} style={styles.backMiniBtn}>
-                    <Ionicons name="chevron-back" size={18} color="#555" />
+                    <Ionicons name="chevron-back" size={18} color={colors.text} />
                   </Pressable>
                   <Text style={styles.modalTitle}>Valitse kauppa</Text>
                   <View style={styles.headerSpacer} />
@@ -220,9 +225,9 @@ export default function Home() {
                       setModalStep("createList")
                     }}
                   >
-                    <Text style={{ fontWeight: "900" }}>Ei kauppaa</Text>
+                    <Text style={{ fontWeight: "900", color: colors.text }}>Ei kauppaa</Text>
                   </Pressable>
-                  {selectedStoreId === null && <Ionicons name="checkmark" size={18} color="#7ed957" />}
+                  {selectedStoreId === null && <Ionicons name="checkmark" size={18} color={colors.accent} />}
                 </View>
 
                 {/* Olemassaolevat kaupat */}
@@ -239,39 +244,40 @@ export default function Home() {
                           setModalStep("createList")
                         }}
                       >
-                        <Text style={{ fontWeight: "700" }}>{item.name} {item.branch}</Text>
+                        <Text style={{ fontWeight: "700", color: colors.text }}>{item.name} {item.branch}</Text>
                       </Pressable>
 
-                      {selectedStoreId === item.id && <Ionicons name="checkmark" size={18} color="#7ed957" />}
+                      {selectedStoreId === item.id && <Ionicons name="checkmark" size={18} color={colors.accent} />}
 
                       <Pressable onPress={() => confirmDeleteStore(item.id, item.name)} hitSlop={10} style={styles.iconButton}>
                         <Ionicons name="trash-outline" size={18} color="#e53935" />
                       </Pressable>
                     </View>
                   )}
-                  ListEmptyComponent={<Text style={{ color: "#666" }}>Ei vielä kauppoja.</Text>}
+                  ListEmptyComponent={<Text style={{ color: colors.secondaryText }}>Ei vielä kauppoja.</Text>}
                 />
 
-                <View style={{ height: 1, backgroundColor: "#eee", marginVertical: 12 }} />
+                <View style={{ height: 1, backgroundColor: colors.secondaryText, marginVertical: 12, opacity: 0.3 }} />
 
                 {/* Lisää uusi kauppa */}
-                <Text style={{ fontWeight: "700", marginBottom: 6 }}>Lisää uusi kauppa</Text>
+                <Text style={{ fontWeight: "700", marginBottom: 6, color: colors.text }}>Lisää uusi kauppa</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Kaupan nimi"
+                  placeholderTextColor={colors.secondaryText}
                   value={newStoreName}
                   onChangeText={setNewStoreName}
                 />
                 <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
                   <Pressable onPress={() => setModalStep("createList")} style={styles.modalButton}>
-                    <Text>Takaisin</Text>
+                    <Text style={{ color: colors.text }}>Takaisin</Text>
                   </Pressable>
                   <Pressable
                     onPress={handleCreateStore}
                     style={[styles.modalButton, !newStoreName.trim() && { opacity: 0.4 }]}
                     disabled={!newStoreName.trim()}
                   >
-                    <Text style={{ fontWeight: "900" }}>Lisää</Text>
+                    <Text style={{ fontWeight: "900", color: colors.text }}>Lisää</Text>
                   </Pressable>
                 </View>
               </>
@@ -283,72 +289,80 @@ export default function Home() {
   )
 }
 
-const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1 },
-  headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  headerTitle: { fontSize: 24, fontWeight: "bold", flex: 1 },
-  addButton: {
-    backgroundColor: "#7ed957",
-    borderRadius: 20,
-    width: 36,
-    height: 36,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addButtonText: { color: "white", fontSize: 28, fontWeight: "bold", marginTop: -2 },
+const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+  StyleSheet.create({
+    container: { padding: 20, flex: 1, backgroundColor: colors.background },
+    headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+    headerTitle: { fontSize: 24, fontWeight: "bold", flex: 1, color: colors.text },
+    addButton: {
+      backgroundColor: colors.accent,
+      borderRadius: 20,
+      width: 36,
+      height: 36,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    addButtonText: { color: "white", fontSize: 28, fontWeight: "bold", marginTop: -2 },
 
-  listBlock: {
-    backgroundColor: "white",
-    borderRadius: 15,
-    padding: 16,
-    marginVertical: 8,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  listTitle: { fontSize: 18, fontWeight: "900" },
-  listSubtitle: { marginTop: 4, color: "#666" },
-  chevron: { fontSize: 28, color: "#bbb", marginLeft: 10 },
-  iconButton: { padding: 6, borderRadius: 10 },
+    listBlock: {
+      backgroundColor: colors.background,
+      borderRadius: 15,
+      padding: 16,
+      marginVertical: 8,
+      flexDirection: "row",
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+    },
+    listTitle: { fontSize: 18, fontWeight: "900", color: colors.text },
+    listSubtitle: { marginTop: 4, color: colors.secondaryText },
+    chevron: { fontSize: 28, color: colors.secondaryText, marginLeft: 10 },
+    iconButton: { padding: 6, borderRadius: 10 },
 
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: { backgroundColor: "white", padding: 24, borderRadius: 10, width: "85%" },
-  modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center" },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.3)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: { backgroundColor: colors.background, padding: 24, borderRadius: 10, width: "85%" },
+    modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center", color: colors.text },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 10,
-  },
-  modalButton: { marginLeft: 16, marginTop: 12 },
+    input: {
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      padding: 10,
+      borderRadius: 8,
+      marginBottom: 10,
+      color: colors.text,
+      backgroundColor: colors.background,
+    },
+    modalButton: { marginLeft: 16, marginTop: 12 },
 
-  storePicker: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  storeRow: { padding: 12, borderRadius: 10, backgroundColor: "#f7f7f7", marginVertical: 6, flexDirection: "row", alignItems: "center" },
-  trashBtn: { padding: 6, borderRadius: 10, marginLeft: 10 },
+    storePicker: {
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      borderRadius: 10,
+      padding: 12,
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: 6,
+      backgroundColor: colors.background,
+    },
+    storeRow: { padding: 12, borderRadius: 10, backgroundColor: colors.background, marginVertical: 6, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.secondaryText },
+    trashBtn: { padding: 6, borderRadius: 10, marginLeft: 10 },
 
-  stepHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
-  headerSpacer: { width: 32 },
-  backMiniBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#f2f2f2",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 8,
-  },
-})
+    stepHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+    headerSpacer: { width: 32 },
+    backMiniBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      alignItems: "center",
+      justifyContent: "center",
+      marginRight: 8,
+    },
+  })

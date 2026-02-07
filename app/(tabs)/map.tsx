@@ -12,8 +12,10 @@ import {
 
 import { useMapViewModel } from '../../src/viewmodels/useMapViewModel'
 import { useShopVM } from '../../src/viewmodels/ShopVMContext'
+import { useTheme } from '../../src/viewmodels/ThemeContext'
 
 export default function MapScreen() {
+  const { colors } = useTheme()
   const {
     userLocation,
     loading,
@@ -27,17 +29,21 @@ export default function MapScreen() {
 
   const [selectedStore, setSelectedStore] = useState<any>(null)
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} />
-  if (error) return <Text>{error}</Text>
+  const styles = createStyles(colors)
+
+  if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.accent} />
+  if (error) return <Text style={{ color: colors.text }}>{error}</Text>
   if (!userLocation) return null
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <View style={styles.textInput}>
         <TextInput
           placeholder="Hae kauppoja..."
+          placeholderTextColor={colors.secondaryText}
           value={searchQuery}
           onChangeText={setSearchQuery}
+          style={{ color: colors.text }}
         />
       </View>
 
@@ -104,55 +110,62 @@ export default function MapScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  textInput: {
-    position: 'absolute',
-    top: 50,
-    width: '90%',
-    alignSelf: 'center',
-    zIndex: 10,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 10,
-  },
-  floatingCard: {
-    position: 'absolute',
-    bottom: 80, 
-    width: '100%',
-    alignItems: 'center',
-    pointerEvents: 'box-none', 
-  },
-  card: {
-    width: '92%',
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-  },
-  storeTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  address: {
-    marginVertical: 8,
-  },
-  saveStoreButton: {
-    marginTop: 12,
-    backgroundColor: '#7ed957',
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  saveStoreButtonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  closeText: {
-    marginTop: 12,
-    textAlign: 'center',
-    color: 'gray',
-  },
-})
+const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+  StyleSheet.create({
+    textInput: {
+      position: 'absolute',
+      top: 50,
+      width: '90%',
+      alignSelf: 'center',
+      zIndex: 10,
+      backgroundColor: colors.background,
+      borderRadius: 10,
+      padding: 10,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+    },
+    floatingCard: {
+      position: 'absolute',
+      bottom: 80,
+      width: '100%',
+      alignItems: 'center',
+      pointerEvents: 'box-none',
+    },
+    card: {
+      width: '92%',
+      backgroundColor: colors.background,
+      borderRadius: 16,
+      padding: 16,
+      elevation: 10,
+      shadowColor: '#000',
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+    },
+    storeTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    address: {
+      marginVertical: 8,
+      color: colors.secondaryText,
+    },
+    saveStoreButton: {
+      marginTop: 12,
+      backgroundColor: colors.accent,
+      paddingVertical: 12,
+      borderRadius: 8,
+    },
+    saveStoreButtonText: {
+      color: 'white',
+      textAlign: 'center',
+      fontWeight: 'bold',
+    },
+    closeText: {
+      marginTop: 12,
+      textAlign: 'center',
+      color: colors.secondaryText,
+    },
+  })

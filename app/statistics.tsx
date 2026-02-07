@@ -3,11 +3,14 @@ import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Dimen
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useStatisticsViewModel } from "../src/viewmodels/useStatisticsViewModel";
+import { useTheme } from "../src/viewmodels/ThemeContext";
 
 const BAR_MAX_WIDTH = Dimensions.get('window').width - 100;
 
 export default function StatisticsScreen() {
   const { categoryStats, totalItems, loading, refreshStatistics } = useStatisticsViewModel();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -26,7 +29,7 @@ export default function StatisticsScreen() {
           
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#7ed957" />
+              <ActivityIndicator size="large" color={colors.accent} />
               <Text style={styles.loadingText}>Ladataan tilastoja...</Text>
             </View>
           ) : totalItems === 0 ? (
@@ -65,7 +68,7 @@ export default function StatisticsScreen() {
                           styles.bar, 
                           { 
                             width: (stat.percentage / 100) * BAR_MAX_WIDTH,
-                            backgroundColor: index === 0 ? '#7ed957' : '#5ab8d6'
+                            backgroundColor: index === 0 ? colors.accent : colors.secondaryText
                           }
                         ]} 
                       />
@@ -93,154 +96,157 @@ export default function StatisticsScreen() {
 }
 
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  header: {
-    backgroundColor: '#d3d3d3',
-    padding: 20,
-  },
-  backButton: {
-    marginBottom: 10,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    letterSpacing: 2,
-    textAlign: 'center',
-  },
-  content: {
-    padding: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  loadingContainer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: 15,
-    fontSize: 16,
-    color: '#666',
-  },
-  placeholderSection: {
-    backgroundColor: '#f5f5f5',
-    padding: 40,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 16,
-    color: '#888',
-    textAlign: 'center',
-  },
-  summaryCard: {
-    backgroundColor: '#7ed957',
-    padding: 25,
-    borderRadius: 15,
-    marginBottom: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  summaryTitle: {
-    fontSize: 16,
-    color: '#fff',
-    opacity: 0.9,
-    marginBottom: 5,
-  },
-  summaryValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginVertical: 5,
-  },
-  summarySubtitle: {
-    fontSize: 14,
-    color: '#fff',
-    opacity: 0.8,
-    marginTop: 5,
-  },
-  section: {
-    marginBottom: 35,
-  },
-  sectionTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  sectionDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
-    fontStyle: 'italic',
-  },
-  statRow: {
-    marginBottom: 20,
-  },
-  statLabelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  statLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  statCount: {
-    fontSize: 14,
-    color: '#666',
-  },
-  barContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  bar: {
-    height: 30,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  percentageText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    minWidth: 50,
-  },
-  refreshButton: {
-    backgroundColor: '#5ab8d6',
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginBottom: 25,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  refreshButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
+const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      flexGrow: 1,
+    },
+    header: {
+      backgroundColor: colors.background,
+      padding: 20,
+    },
+    backButton: {
+      marginBottom: 10,
+    },
+    backButtonText: {
+      fontSize: 16,
+      color: colors.text,
+    },
+    headerTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: colors.text,
+      letterSpacing: 2,
+      textAlign: 'center',
+    },
+    content: {
+      padding: 20,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      color: colors.text,
+      textAlign: 'center',
+      marginBottom: 30,
+    },
+    loadingContainer: {
+      padding: 40,
+      alignItems: 'center',
+    },
+    loadingText: {
+      marginTop: 15,
+      fontSize: 16,
+      color: colors.secondaryText,
+    },
+    placeholderSection: {
+      backgroundColor: colors.background,
+      padding: 40,
+      borderRadius: 10,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+    },
+    placeholderText: {
+      fontSize: 16,
+      color: colors.secondaryText,
+      textAlign: 'center',
+    },
+    summaryCard: {
+      backgroundColor: colors.accent,
+      padding: 25,
+      borderRadius: 15,
+      marginBottom: 30,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    summaryTitle: {
+      fontSize: 16,
+      color: '#fff',
+      opacity: 0.9,
+      marginBottom: 5,
+    },
+    summaryValue: {
+      fontSize: 48,
+      fontWeight: 'bold',
+      color: '#fff',
+      marginVertical: 5,
+    },
+    summarySubtitle: {
+      fontSize: 14,
+      color: '#fff',
+      opacity: 0.8,
+      marginTop: 5,
+    },
+    section: {
+      marginBottom: 35,
+    },
+    sectionTitle: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    sectionDescription: {
+      fontSize: 14,
+      color: colors.secondaryText,
+      marginBottom: 20,
+      fontStyle: 'italic',
+    },
+    statRow: {
+      marginBottom: 20,
+    },
+    statLabelContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 6,
+    },
+    statLabel: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    statCount: {
+      fontSize: 14,
+      color: colors.secondaryText,
+    },
+    barContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    bar: {
+      height: 30,
+      borderRadius: 6,
+      marginRight: 10,
+    },
+    percentageText: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.text,
+      minWidth: 50,
+    },
+    refreshButton: {
+      backgroundColor: colors.accent,
+      padding: 16,
+      borderRadius: 10,
+      alignItems: 'center',
+      marginBottom: 25,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    refreshButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
