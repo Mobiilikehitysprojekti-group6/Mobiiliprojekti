@@ -148,9 +148,6 @@ export default function Home() {
               >
                 <Ionicons name="trash-outline" size={22} color="#e53935" />
               </Pressable>
-
-              {/* ✅ Pieni vihje, että kortti on raahattava */}
-              <Ionicons name="reorder-two" size={18} color={colors.secondaryText} />
             </Pressable>
           )
         }}
