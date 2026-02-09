@@ -301,7 +301,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       gap: 10,
       marginBottom: 0,
       marginTop: 10,
-      background: colors.background,
+      backgroundColor: colors.background,
       paddingHorizontal: 10,
       paddingVertical: 5,
       borderRadius: 20,

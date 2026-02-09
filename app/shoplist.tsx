@@ -5,7 +5,6 @@ import {
   TextInput,
   StyleSheet,
   Pressable,
-  Modal,
   Alert,
   useWindowDimensions,
 } from "react-native"
@@ -19,6 +18,8 @@ import {
 
 import { useShopVM, ListItem, Category } from "../src/viewmodels/ShopVMContext"
 import { useTheme } from "../src/viewmodels/ThemeContext"
+import EditItemModal from "../src/components/ShoplistEditItemModal"
+import CategoryPickerModal from "../src/components/ShoplistCategoryPickerModal"
 
 /**
  * ScopeKey kertoo mistä kategoriat haetaan:
@@ -185,7 +186,7 @@ export default function ShopListScreen() {
     return catBlocks
   }, [items, categories])
 
-  // Dropdown open
+  // Dropdown auki
   const openPickerForNew = () => {
     setPickerMode("new")
     setAddingCategory(false)
@@ -423,108 +424,33 @@ export default function ShopListScreen() {
         />
       </NestableScrollContainer>
 
-      {/* Kategorian valinta modal */}
-      <Modal
+      {/* Kategorian valinta modal (componentsista) */}
+      <CategoryPickerModal
         visible={pickerOpen}
-        transparent
-        animationType="fade"
-        presentationStyle="overFullScreen"
-        onRequestClose={() => setPickerOpen(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Text style={styles.modalTitle}>Valitse kategoria</Text>
-              <Pressable onPress={() => setPickerOpen(false)} hitSlop={10}>
-                <Ionicons name="close" size={22} color={colors.text} />
-              </Pressable>
-            </View>
+        onClose={() => setPickerOpen(false)}
+        categories={categories}
+        onPickCategory={pickCategory}
+        onCreateNewCategory={createNewCategory}
+        addingCategory={addingCategory}
+        setAddingCategory={setAddingCategory}
+        newCategoryName={newCategoryName}
+        setNewCategoryName={setNewCategoryName}
+        colors={colors}
+        styles={styles}
+      />
 
-            {categories.map((c) => (
-              <Pressable key={c.id} onPress={() => pickCategory(c.id)} style={styles.pickerRow}>
-                <Text style={{ fontWeight: "700", color: colors.text }}>{c.name}</Text>
-              </Pressable>
-            ))}
-
-            <Pressable onPress={() => pickCategory(null)} style={styles.pickerRow}>
-              <Text style={{ fontWeight: "900", color: colors.text }}>Ei kategoriaa</Text>
-            </Pressable>
-
-            <View
-              style={{
-                height: 1,
-                backgroundColor: colors.secondaryText,
-                marginVertical: 12,
-                opacity: 0.3,
-              }}
-            />
-
-            {!addingCategory ? (
-              <Pressable onPress={() => setAddingCategory(true)} style={styles.pickerRow}>
-                <Text style={{ fontWeight: "900", color: colors.accent }}>+ Lisää uusi kategoria</Text>
-              </Pressable>
-            ) : (
-              <>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Uuden kategorian nimi"
-                  placeholderTextColor={colors.secondaryText}
-                  value={newCategoryName}
-                  onChangeText={setNewCategoryName}
-                />
-                <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-                  <Pressable onPress={() => setAddingCategory(false)} style={styles.modalButton}>
-                    <Text style={{ color: colors.text }}>Peruuta</Text>
-                  </Pressable>
-                  <Pressable onPress={createNewCategory} style={styles.modalButton}>
-                    <Text style={{ fontWeight: "900", color: colors.text }}>Lisää</Text>
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit modal */}
-      <Modal
+      {/* Tuotteen muokkaus modal (componentsista) */}
+      <EditItemModal
         visible={editVisible}
-        transparent
-        animationType="fade"
-        presentationStyle="overFullScreen"
-        onRequestClose={() => setEditVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Muokkaa tuotetta</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Tuote"
-              placeholderTextColor={colors.secondaryText}
-              value={editName}
-              onChangeText={setEditName}
-            />
-
-            <Pressable onPress={openPickerForEdit} style={styles.categorySelectWide}>
-              <Text style={{ color: colors.secondaryText }}>Kategoria</Text>
-              <Text style={{ fontWeight: "900", color: colors.text }} numberOfLines={1}>
-                {editCategoryName}
-              </Text>
-              <Ionicons name="chevron-down" size={16} color={colors.secondaryText} />
-            </Pressable>
-
-            <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-              <Pressable onPress={() => setEditVisible(false)} style={styles.modalButton}>
-                <Text style={{ color: colors.text }}>Peruuta</Text>
-              </Pressable>
-              <Pressable onPress={saveEdit} style={styles.modalButton}>
-                <Text style={{ fontWeight: "900", color: colors.text }}>Tallenna</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setEditVisible(false)}
+        onSave={saveEdit}
+        editName={editName}
+        setEditName={setEditName}
+        editCategoryName={editCategoryName}
+        onOpenCategoryPicker={openPickerForEdit}
+        colors={colors}
+        styles={styles}
+      />
     </SafeAreaView>
   )
 }
