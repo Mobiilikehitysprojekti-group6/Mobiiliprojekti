@@ -71,7 +71,7 @@ export type ListItem = {
  */
 type StoreDoc = {
   name: string
-  branch?: string
+  branch?: string | null
   createdAt?: unknown // serverTimestamp -> voi olla hetkellisesti "pending"
 }
 
@@ -300,7 +300,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
             const order = typeof data.order === "number" ? data.order : 0
 
-            // ✅ muista palauttaa order jos ShopList-tyyppi sisältää sen
+            // muista palauttaa order jos ShopList-tyyppi sisältää sen
             return { id: d.id, name: data.name, storeId, order }
           })
           .filter((x): x is ShopList => x !== null)
@@ -335,7 +335,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
     await addDoc(collection(db, "users", uid, "stores"), {
       name: trimmed,
-      branch: branch?.trim(),
+      branch: branch?.trim() ?? null,
       createdAt: serverTimestamp(),
     } satisfies StoreDoc)
   }

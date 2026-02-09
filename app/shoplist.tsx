@@ -265,7 +265,7 @@ export default function ShopListScreen() {
         </Text>
       </View>
 
-      {/* Add row */}
+      {/* Tehdään row */}
       <View style={styles.addRow}>
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0, fontWeight: "700" }]}
@@ -293,18 +293,18 @@ export default function ShopListScreen() {
         </Pressable>
       </View>
 
-      {/* ✅ Scroll + drag: NestableScrollContainer scrollaa, listat kasvavat sisällön mukaan */}
+      {/* Scroll + drag: NestableScrollContainer scrollaa, listat kasvavat sisällön mukaan */}
       <NestableScrollContainer
         style={{ flex: 1 }}
         nestedScrollEnabled
-        contentContainerStyle={{ paddingBottom: 24 }} // ✅ EI flexGrow
+        contentContainerStyle={{ paddingBottom: 24 }} 
       >
         <NestableDraggableFlatList
           activationDistance={24}
           data={blocks}
           keyExtractor={(b) => String(b.id ?? "__none__")}
-          scrollEnabled={false} // ✅ ulompi EI scrollaa
-          style={{ flexGrow: 0 }} // ✅ tärkein: listan korkeus = sisältö
+          scrollEnabled={false} // ulompi EI scrollaa
+          style={{ flexGrow: 0 }} // listan korkeus = sisältö
           contentContainerStyle={{ paddingBottom: 12 }}
           disableVirtualization
           removeClippedSubviews={false}
@@ -329,8 +329,8 @@ export default function ShopListScreen() {
                 activationDistance={24}
                 data={block.items}
                 keyExtractor={(it) => it.id}
-                scrollEnabled={false} // ✅ sisempi EI scrollaa
-                style={{ flexGrow: 0 }} // ✅ tärkeä myös täällä
+                scrollEnabled={false} // sisempi EI scrollaa
+                style={{ flexGrow: 0 }} // tärkeä myös täällä
                 disableVirtualization
                 removeClippedSubviews={false}
                 onDragEnd={async ({ data }) => {
