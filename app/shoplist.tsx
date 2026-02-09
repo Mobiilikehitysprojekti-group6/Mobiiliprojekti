@@ -12,7 +12,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import { NestableScrollContainer, NestableDraggableFlatList } from "react-native-draggable-flatlist"
+import {
+  NestableScrollContainer,
+  NestableDraggableFlatList,
+} from "react-native-draggable-flatlist"
 
 import { useShopVM, ListItem, Category } from "../src/viewmodels/ShopVMContext"
 import { useTheme } from "../src/viewmodels/ThemeContext"
@@ -21,8 +24,6 @@ import { useTheme } from "../src/viewmodels/ThemeContext"
  * ScopeKey kertoo mistä kategoriat haetaan:
  * - jos listalla on kauppa (storeId) => store:<storeId>  (kaupan kategoriat)
  * - jos listalla ei ole kauppaa       => list:<listId>    (listakohtaiset kategoriat)
- *
- * Näin saadaan sama UI toimimaan sekä “kaupallisille” listoille että ilman kauppaa -listoille.
  */
 const scopeKey = (storeId: string | null, listId: string) =>
   storeId ? `store:${storeId}` : `list:${listId}`
@@ -32,8 +33,8 @@ export default function ShopListScreen() {
   const router = useRouter()
   const { listId } = useLocalSearchParams<{ listId: string }>()
   const { width } = useWindowDimensions()
+
   // Nappien leveydet suhteessa näytön leveyteen (max/min rajoilla)
-  // Huom! Ei laiteta stylesheettiin, koska riippuvat runtime-näytön leveydestä
   const addWidth = Math.max(60, Math.min(78, Math.round(width * 0.13)))
   const catWidth = Math.max(115, Math.min(180, Math.round(width * 0.28)))
 
@@ -60,10 +61,7 @@ export default function ShopListScreen() {
 
   const styles = createStyles(colors)
 
-  /**
-   * Listan perustiedot: haetaan VM:n lists-taulukosta listId:llä.
-   * Tämä pitää UI:n “ohuena”: listan nimi ja storeId tulevat yhdestä paikasta.
-   */
+  // Listan perustiedot
   const list = useMemo(
     () => lists.find((l) => l.id === String(listId)),
     [lists, listId]
@@ -74,32 +72,22 @@ export default function ShopListScreen() {
     [list?.storeId, getStoreName]
   )
 
-  // Turvallinen string avain item-cacheen
   const listKey = String(listId ?? "")
 
-  // Kategoriat haetaan scopeKey:llä (store:<id> tai list:<id>)
-  const catKey = useMemo(
-    () => (list ? scopeKey(list.storeId, list.id) : ""),
-    [list]
-  )
+  const catKey = useMemo(() => (list ? scopeKey(list.storeId, list.id) : ""), [list])
 
-  // VM-cacheista tämän listan itemit ja kategoriat
   const categories: Category[] = categoriesByScope[catKey] ?? []
   const items: ListItem[] = itemsByListId[listKey] ?? []
 
   /* Itemin lisäys UI-state */
   const [newItemName, setNewItemName] = useState("")
-
-  // itemille valittu kategoria (dropdownista)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null | undefined>(undefined)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<
+    string | null | undefined
+  >(undefined)
 
   /* Kategoria dropdown */
   const [pickerOpen, setPickerOpen] = useState(false)
-
-  // mode kertoo, valitaanko kategoria "uudelle itemille" vai "edit itemille"
   const [pickerMode, setPickerMode] = useState<"new" | "edit">("new")
-
-  // "Lisää uusi kategoria" -tila dropdownin sisällä
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
 
@@ -109,13 +97,7 @@ export default function ShopListScreen() {
   const [editName, setEditName] = useState("")
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null)
 
-  /**
-   * TÄRKEÄ: tässä siirretään Firestore-kuuntelut VM:n kautta
-   * - subscribeItems(list.id) kuuntelee itemsit
-   * - subscribeCategoriesForList(list.id, list.storeId) kuuntelee kategoriat oikeasta paikasta
-   *
-   * Palautetaan cleanupissa unsubscribe-funktiot => ei jää “roikkumaan” kuuntelijoita.
-   */
+  // Firestore-kuuntelut
   useEffect(() => {
     if (!uid || !list) return
 
@@ -132,7 +114,6 @@ export default function ShopListScreen() {
     }
   }, [uid, listId, list?.storeId])
 
-  /* Varmistus */
   if (!uid) {
     return (
       <View style={styles.container}>
@@ -154,7 +135,6 @@ export default function ShopListScreen() {
 
   const title = storeName ? `${list.name} • ${storeName}` : list.name
 
-  /* UI apunimet (kategorian nimi) */
   const selectedCategoryLabel = useMemo(() => {
     if (selectedCategoryId === undefined) return "Kategoria"
     if (selectedCategoryId === null) return "Ei kategoriaa"
@@ -166,14 +146,8 @@ export default function ShopListScreen() {
     return categories.find((c) => c.id === editCategoryId)?.name ?? "Ei kategoriaa"
   }, [editCategoryId, categories])
 
-  /* Itemit ryhmiteltynä */
-  /**
-   *
-   * Tässä nyt drag&drop blokkeina, ei SectionListillä.
-   */
-
   type CategoryBlock = {
-    id: string | null // null = "Ei kategoriaa"
+    id: string | null
     name: string
     order: number
     items: ListItem[]
@@ -187,7 +161,6 @@ export default function ShopListScreen() {
       byCat.set(key, [...(byCat.get(key) ?? []), it])
     }
 
-    // Kategoriat järjestyksessä
     const catBlocks: CategoryBlock[] = categories
       .slice()
       .sort((a, b) => a.order - b.order)
@@ -197,9 +170,8 @@ export default function ShopListScreen() {
         order: c.order,
         items: (byCat.get(c.id) ?? []).slice().sort((a, b) => a.order - b.order),
       }))
-      .filter((b) => b.items.length > 0) // suodatetaan pois tyhjät kategoriat
+      .filter((b) => b.items.length > 0)
 
-    // Ei kategoriaa
     const noCatItems = (byCat.get(null) ?? []).slice().sort((a, b) => a.order - b.order)
     if (noCatItems.length) {
       catBlocks.push({
@@ -213,9 +185,7 @@ export default function ShopListScreen() {
     return catBlocks
   }, [items, categories])
 
-  /* Actions */
-
-  // Avaa dropdown “uuden itemin” kategoriavalinnalle
+  // Dropdown open
   const openPickerForNew = () => {
     setPickerMode("new")
     setAddingCategory(false)
@@ -223,7 +193,6 @@ export default function ShopListScreen() {
     setPickerOpen(true)
   }
 
-  // Avaa dropdown “edit itemin” kategoriavalinnalle
   const openPickerForEdit = () => {
     setPickerMode("edit")
     setAddingCategory(false)
@@ -231,33 +200,27 @@ export default function ShopListScreen() {
     setPickerOpen(true)
   }
 
-  // Valitse kategoria (tai null = “Ei kategoriaa”)
   const pickCategory = (id: string | null) => {
     if (pickerMode === "new") setSelectedCategoryId(id)
     else setEditCategoryId(id)
     setPickerOpen(false)
   }
 
-  // Lisää item (VM hoitaa tallennuksen, orderin ja categoryId:n)
   const handleAdd = async () => {
     const n = newItemName.trim()
     if (!n) return
-
     await addItem(list.id, n, selectedCategoryId ?? null)
     setNewItemName("")
   }
 
-  // Toggle done
   const toggleDone = async (it: ListItem) => {
     await updateItem(list.id, it.id, { done: !it.done })
   }
 
-  // Poista item
   const remove = async (it: ListItem) => {
     await deleteItem(list.id, it.id)
   }
 
-  // Avaa edit-modal
   const openEdit = (it: ListItem) => {
     setEditItem(it)
     setEditName(it.name)
@@ -265,10 +228,8 @@ export default function ShopListScreen() {
     setEditVisible(true)
   }
 
-  // Tallenna edit
   const saveEdit = async () => {
     if (!editItem) return
-
     const n = editName.trim()
     if (!n) return
 
@@ -281,7 +242,6 @@ export default function ShopListScreen() {
     setEditItem(null)
   }
 
-  // Lisää uusi kategoria (oikeaan scopeen store/list)
   const createNewCategory = async () => {
     const n = newCategoryName.trim()
     if (!n) return
@@ -290,8 +250,6 @@ export default function ShopListScreen() {
     setNewCategoryName("")
     setAddingCategory(false)
   }
-
-  /* UI */
 
   return (
     <SafeAreaView style={styles.container}>
@@ -306,7 +264,7 @@ export default function ShopListScreen() {
         </Text>
       </View>
 
-      {/* Add row: Tuote + Kategoria dropdown + Lisää */}
+      {/* Add row */}
       <View style={styles.addRow}>
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0, fontWeight: "700" }]}
@@ -316,10 +274,12 @@ export default function ShopListScreen() {
           onChangeText={setNewItemName}
         />
 
-        {/* Kategoria dropdown */}
         <Pressable onPress={openPickerForNew} style={[styles.categoryPill, { width: catWidth }]}>
           <Text
-            style={[styles.categoryPillText, !selectedCategoryId && { color: colors.secondaryText, fontWeight: "700" }]}
+            style={[
+              styles.categoryPillText,
+              !selectedCategoryId && { color: colors.secondaryText, fontWeight: "700" },
+            ]}
             numberOfLines={1}
           >
             {selectedCategoryLabel}
@@ -327,29 +287,33 @@ export default function ShopListScreen() {
           <Ionicons name="chevron-down" size={16} color={colors.secondaryText} />
         </Pressable>
 
-
         <Pressable onPress={handleAdd} style={[styles.addBtn, { width: addWidth }]}>
           <Text style={styles.addBtnText}>Lisää</Text>
         </Pressable>
       </View>
 
-      {/* Tuotteet järjestettynä kategorian mukaan */}
-      {/* Tuotteet (drag&drop): kategoriat + tuotteet saman sivun sisällä */}
-      <NestableScrollContainer contentContainerStyle={{ paddingBottom: 24 }}>
+      {/* ✅ Scroll + drag: NestableScrollContainer scrollaa, listat kasvavat sisällön mukaan */}
+      <NestableScrollContainer
+        style={{ flex: 1 }}
+        nestedScrollEnabled
+        contentContainerStyle={{ paddingBottom: 24 }} // ✅ EI flexGrow
+      >
         <NestableDraggableFlatList
-          activationDistance={8}
+          activationDistance={24}
           data={blocks}
           keyExtractor={(b) => String(b.id ?? "__none__")}
-          // tärkeä: ulompi lista ei scrollaa itse, scroll container hoitaa
-          scrollEnabled={false}
+          scrollEnabled={false} // ✅ ulompi EI scrollaa
+          style={{ flexGrow: 0 }} // ✅ tärkein: listan korkeus = sisältö
+          contentContainerStyle={{ paddingBottom: 12 }}
+          disableVirtualization
+          removeClippedSubviews={false}
           onDragEnd={async ({ data }) => {
-            // siirretään vain oikeita kategorioita; "Ei kategoriaa" jätetään loppuun
             const nextCatIds = data.filter((b) => b.id !== null).map((b) => b.id as string)
             await reorderCategoriesForList(list.id, list.storeId, nextCatIds)
           }}
           renderItem={({ item: block, drag, isActive }) => (
             <View style={{ paddingTop: 10 }}>
-              {/* Kategoria-otsikko: koko rivi on dragattava (paitsi "Ei kategoriaa") */}
+              {/* Kategoria-otsikko */}
               <Pressable
                 style={styles.sectionHeaderRow}
                 onLongPress={block.id !== null ? drag : undefined}
@@ -359,29 +323,28 @@ export default function ShopListScreen() {
                 <Text style={styles.sectionTitle}>{block.name}</Text>
               </Pressable>
 
-
-              {/* Tuotteet draggable tässä kategoriassa */}
+              {/* Tuotteet kategoriassa */}
               <NestableDraggableFlatList
-                activationDistance={8}
+                activationDistance={24}
                 data={block.items}
                 keyExtractor={(it) => it.id}
-                scrollEnabled={false}
+                scrollEnabled={false} // ✅ sisempi EI scrollaa
+                style={{ flexGrow: 0 }} // ✅ tärkeä myös täällä
+                disableVirtualization
+                removeClippedSubviews={false}
                 onDragEnd={async ({ data }) => {
                   const nextItemIds = data.map((it) => it.id)
                   await reorderItemsInCategory(list.id, block.id, nextItemIds)
                 }}
                 ListEmptyComponent={
-                  <Text style={{ color: colors.secondaryText, marginBottom: 6 }}>
-                    (Ei tuotteita)
-                  </Text>
+                  <Text style={{ color: colors.secondaryText, marginBottom: 6 }}>(Ei tuotteita)</Text>
                 }
                 renderItem={({ item, drag: dragItem, isActive: itemActive }) => (
-                  <View style={[styles.itemRow, itemActive && styles.dragActive ]}>
+                  <View style={[styles.itemRow, itemActive && styles.dragActive]}>
                     {/* Checkbox: tap = toggle, long press = drag */}
                     <Pressable
                       onPress={() => toggleDone(item)}
                       onLongPress={() => {
-                        // Drag sallittu vain jos ei olla painettu qty/roskista
                         if (blockRowDragRef.current) return
                         dragItem()
                       }}
@@ -407,11 +370,11 @@ export default function ShopListScreen() {
                       <Text style={[styles.itemText, item.done && styles.itemDone]}>{item.name}</Text>
                     </Pressable>
 
-                    {/* quantity stepper: estää dragin kun tätä painetaan */}
+                    {/* Quantity stepper: estää dragin */}
                     <View style={styles.qtyWrap}>
                       <Pressable
-                        onPressIn={() => (blockRowDragRef.current = true)}  // ✅ estä drag
-                        onPressOut={() => (blockRowDragRef.current = false)} // ✅ vapauta
+                        onPressIn={() => (blockRowDragRef.current = true)}
+                        onPressOut={() => (blockRowDragRef.current = false)}
                         onPress={() => changeQuantity(list.id, item.id, -1)}
                         hitSlop={10}
                       >
@@ -421,8 +384,8 @@ export default function ShopListScreen() {
                       <Text style={styles.qtyText}>{item.quantity ?? 1}</Text>
 
                       <Pressable
-                        onPressIn={() => (blockRowDragRef.current = true)}   // ✅ estä drag
-                        onPressOut={() => (blockRowDragRef.current = false)} // ✅ vapauta
+                        onPressIn={() => (blockRowDragRef.current = true)}
+                        onPressOut={() => (blockRowDragRef.current = false)}
                         onPress={() => changeQuantity(list.id, item.id, +1)}
                         hitSlop={10}
                       >
@@ -430,10 +393,10 @@ export default function ShopListScreen() {
                       </Pressable>
                     </View>
 
-                    {/* Roskakori: estää dragin kun tätä painetaan */}
+                    {/* Roskakori: estää dragin */}
                     <Pressable
-                      onPressIn={() => (blockRowDragRef.current = true)}    // ✅ estä drag
-                      onPressOut={() => (blockRowDragRef.current = false)}  // ✅ vapauta
+                      onPressIn={() => (blockRowDragRef.current = true)}
+                      onPressOut={() => (blockRowDragRef.current = false)}
                       onPress={() =>
                         Alert.alert("Poistetaanko tuote?", `"${item.name}" poistetaan.`, [
                           { text: "Peruuta", style: "cancel" },
@@ -452,9 +415,7 @@ export default function ShopListScreen() {
           )}
           ListFooterComponent={
             blocks.length === 0 ? (
-              <Text style={{ marginTop: 16, color: colors.secondaryText }}>
-                Lisää ensimmäinen tuote yllä.
-              </Text>
+              <Text style={{ marginTop: 16, color: colors.secondaryText }}>Lisää ensimmäinen tuote yllä.</Text>
             ) : (
               <View style={{ height: 12 }} />
             )
@@ -462,7 +423,7 @@ export default function ShopListScreen() {
         />
       </NestableScrollContainer>
 
-      {/* Kategorian valinta modal (dropdownin “sisältö”) */}
+      {/* Kategorian valinta modal */}
       <Modal
         visible={pickerOpen}
         transparent
@@ -479,26 +440,28 @@ export default function ShopListScreen() {
               </Pressable>
             </View>
 
-            {/* Kategoriat */}
             {categories.map((c) => (
               <Pressable key={c.id} onPress={() => pickCategory(c.id)} style={styles.pickerRow}>
                 <Text style={{ fontWeight: "700", color: colors.text }}>{c.name}</Text>
               </Pressable>
             ))}
 
-            {/* Ei kategoriaa */}
             <Pressable onPress={() => pickCategory(null)} style={styles.pickerRow}>
               <Text style={{ fontWeight: "900", color: colors.text }}>Ei kategoriaa</Text>
             </Pressable>
 
-            <View style={{ height: 1, backgroundColor: colors.secondaryText, marginVertical: 12, opacity: 0.3 }} />
+            <View
+              style={{
+                height: 1,
+                backgroundColor: colors.secondaryText,
+                marginVertical: 12,
+                opacity: 0.3,
+              }}
+            />
 
-            {/* Lisää uusi kategoria -kohta */}
             {!addingCategory ? (
               <Pressable onPress={() => setAddingCategory(true)} style={styles.pickerRow}>
-                <Text style={{ fontWeight: "900", color: colors.accent }}>
-                  + Lisää uusi kategoria
-                </Text>
+                <Text style={{ fontWeight: "900", color: colors.accent }}>+ Lisää uusi kategoria</Text>
               </Pressable>
             ) : (
               <>
@@ -543,7 +506,6 @@ export default function ShopListScreen() {
               onChangeText={setEditName}
             />
 
-            {/* Editissäkin käytetään samaa dropdownia */}
             <Pressable onPress={openPickerForEdit} style={styles.categorySelectWide}>
               <Text style={{ color: colors.secondaryText }}>Kategoria</Text>
               <Text style={{ fontWeight: "900", color: colors.text }} numberOfLines={1}>
@@ -567,15 +529,16 @@ export default function ShopListScreen() {
   )
 }
 
-const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+const createStyles = (colors: {
+  background: string
+  text: string
+  secondaryText: string
+  accent: string
+}) =>
   StyleSheet.create({
     container: { padding: 20, flex: 1, backgroundColor: colors.background },
 
-    topRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 14
-    },
+    topRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
 
     backBtn: {
       width: 36,
@@ -589,19 +552,11 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       marginRight: 10,
     },
 
-    backText: {
-      fontSize: 26,
-      color: colors.text,
-      marginTop: -2
-    },
+    backText: { fontSize: 26, color: colors.text, marginTop: -2 },
 
     headerTitle: { fontSize: 18, fontWeight: "900", flex: 1, color: colors.text },
 
-    addRow: {
-      flexDirection: "row",
-      alignItems: "center", gap: 8,
-      marginBottom: 12
-    },
+    addRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 12 },
 
     input: {
       borderWidth: 1,
@@ -626,6 +581,23 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     },
     addBtnText: { color: "white", fontWeight: "900" },
 
+    categoryPill: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 8,
+      paddingHorizontal: 10,
+      height: 44,
+      borderWidth: 1,
+      borderColor: colors.secondaryText,
+      borderRadius: 10,
+      backgroundColor: colors.background,
+      width: 120,
+      flexShrink: 0,
+    },
+
+    categoryPillText: { fontSize: 14, fontWeight: "900", color: colors.text, flexShrink: 1 },
+
     sectionHeaderRow: {
       paddingTop: 10,
       paddingBottom: 6,
@@ -633,6 +605,23 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       alignItems: "center",
       justifyContent: "space-between",
     },
+
+    sectionTitle: { fontSize: 14, fontWeight: "900", color: colors.secondaryText },
+
+    itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },
+
+    dragActive: {
+      transform: [{ scale: 1.02 }],
+      elevation: 3,
+      shadowOpacity: 0.12,
+      shadowRadius: 6,
+    },
+
+    checkbox: { padding: 4 },
+
+    itemText: { fontSize: 16, fontWeight: "800", color: colors.text },
+
+    itemDone: { textDecorationLine: "line-through", color: colors.secondaryText },
 
     qtyWrap: {
       flexDirection: "row",
@@ -645,40 +634,39 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       borderRadius: 8,
     },
 
-    qtyBtn: {
-      fontSize: 18,
-      fontWeight: "900",
-      color: colors.text,
-    },
+    qtyBtn: { fontSize: 18, fontWeight: "900", color: colors.text },
 
-    qtyText: {
-      width: 18,
-      textAlign: "center",
-      fontWeight: "900",
-      color: colors.text,
-    },
+    qtyText: { width: 18, textAlign: "center", fontWeight: "900", color: colors.text },
 
-    categoryPill: {
-      flexDirection: "row",
+    iconButton: { padding: 6, borderRadius: 10 },
+
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.3)",
+      justifyContent: "center",
       alignItems: "center",
-      justifyContent: "space-between",
-      gap: 8,
-      paddingHorizontal: 10,
-      height: 44,
+    },
+
+    modalContent: {
+      backgroundColor: colors.background,
+      padding: 24,
+      borderRadius: 10,
+      width: "85%",
       borderWidth: 1,
       borderColor: colors.secondaryText,
-      borderRadius: 10,
-      backgroundColor: colors.background,
-      width: 120, // lukittu leveys
-      flexShrink: 0, // ei kutistu liian koskaan sisällön takia
     },
 
-    categoryPillText: {
-      fontSize: 14,
-      fontWeight: "900",
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 12,
+      textAlign: "center",
       color: colors.text,
-      flexShrink: 1,
     },
+
+    modalButton: { marginLeft: 16, marginTop: 12 },
+
+    pickerRow: { paddingVertical: 10 },
 
     categorySelectWide: {
       borderWidth: 1,
@@ -689,32 +677,4 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       marginBottom: 10,
       gap: 2,
     },
-
-    sectionTitle: { fontSize: 14, fontWeight: "900", color: colors.secondaryText },
-
-    itemRow: { flexDirection: "row", alignItems: "center", paddingVertical: 8, gap: 10 },
-    dragActive: {
-      transform: [{ scale: 1.02 }],
-      elevation: 3,
-      shadowOpacity: 0.12,
-      shadowRadius: 6
-    },
-    checkbox: { padding: 4 },
-    itemText: {
-      fontSize: 16, fontWeight: "800", color: colors.text },
-    itemDone: { textDecorationLine: "line-through", color: colors.secondaryText },
-
-    iconButton: { padding: 6, borderRadius: 10 },
-
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.3)",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    modalContent: { backgroundColor: colors.background, padding: 24, borderRadius: 10, width: "85%", borderWidth: 1, borderColor: colors.secondaryText },
-    modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center", color: colors.text },
-    modalButton: { marginLeft: 16, marginTop: 12 },
-
-    pickerRow: { paddingVertical: 10 },
   })
