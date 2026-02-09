@@ -1,6 +1,8 @@
 import React, { useMemo, useRef, useState, useEffect } from "react"
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, Modal, Pressable, Alert } from "react-native"
+import { View, Text, TextInput, StyleSheet, FlatList, Modal, Pressable, Alert } from "react-native"
 import DraggableFlatList from "react-native-draggable-flatlist"
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
+import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useShopVM } from "../../src/viewmodels/ShopVMContext"
@@ -13,14 +15,9 @@ export default function Home() {
 
   const styles = createStyles(colors)
 
-  useEffect(() => {
-  console.log("✅ CURRENT UID:", uid)
-  }, [uid])
-
-  useEffect(() => {
-    console.log("📦 lists length:", lists.length)
-  }, [lists.length])
-
+  // SafeArea + tab bar korkeus
+  const tabBarHeight = useBottomTabBarHeight()
+  const listBottomPadding = tabBarHeight + 8
 
   // Estää dragin kun painetaan roskista
   const blockRowDragRef = useRef(false)
@@ -91,10 +88,10 @@ export default function Home() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={styles.headerRow}>
-        <Text style={styles.headerTitle}>Ostoslistat</Text>
+        <Text style={styles.headerTitle}>Omat KauppaLappusi</Text>
         <Pressable
           onPress={openCreateListModal}
           style={[styles.addButton, !uid && { opacity: 0.4 }]}
@@ -107,14 +104,14 @@ export default function Home() {
       {/* Auth-status */}
       {!uid && <Text style={{ color: colors.secondaryText }}>Kirjaudutaan anonyymisti…</Text>}
 
-      {/* Ostoslistat, drag&drop järjesty. Tap avaa, long press raahaa */}
       {/* Ostoslistat: drag&drop järjestys. Tap avaa, long press raahaa */}
       <DraggableFlatList
         data={lists}
         keyExtractor={(l) => l.id}
         activationDistance={8}
+        contentContainerStyle={{ paddingBottom: listBottomPadding }} // lisätään tilaa alareunaan, jottei jää alle
         onDragEnd={async ({ data }) => {
-          // ✅ Päivitä järjestys Firestoreen
+          // Päivitä järjestys Firestoreen
           await reorderLists(data.map((x) => x.id))
         }}
         renderItem={({ item, drag, isActive }) => {
@@ -125,7 +122,7 @@ export default function Home() {
               style={[styles.listBlock, isActive && { opacity: 0.9 }]}
               delayLongPress={150}
               onLongPress={() => {
-                // ✅ Jos kosketus alkaa roskiksesta, estä drag
+                // Jos kosketus alkaa roskiksesta, estä drag
                 if (blockRowDragRef.current) return
                 drag()
               }}
@@ -138,7 +135,7 @@ export default function Home() {
                 <Text style={styles.listSubtitle}>{storeName}</Text>
               </View>
 
-              {/* ✅ Roskakori: ei aloita dragia */}
+              {/* Roskakori: ei aloita dragia */}
               <Pressable
                 onPressIn={() => (blockRowDragRef.current = true)}
                 onPressOut={() => (blockRowDragRef.current = false)}
@@ -282,13 +279,13 @@ export default function Home() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
   StyleSheet.create({
-    container: { padding: 20, flex: 1, backgroundColor: colors.background },
+    container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 16},
     headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
     headerTitle: { fontSize: 24, fontWeight: "bold", flex: 1, color: colors.text },
     addButton: {

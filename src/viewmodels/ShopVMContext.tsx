@@ -438,7 +438,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     await deleteDoc(doc(db, "users", uid, "lists", listId))
   }
 
-  // reordeLists: etusivun listojen drag & drop -järjestelyyn, tallennus firestoreen
+  // reorderLists: etusivun listojen drag & drop -järjestelyyn, tallennus firestoreen
   const reorderLists = async (nextListIds: string[]) => {
     if (!uid) return
     const batch = writeBatch(db)
