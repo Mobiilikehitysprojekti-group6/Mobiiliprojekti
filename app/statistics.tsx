@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, ActivityIndicator, Dimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useStatisticsViewModel } from "../src/viewmodels/useStatisticsViewModel";
 import { useTheme } from "../src/viewmodels/ThemeContext";
 
@@ -51,7 +52,7 @@ export default function StatisticsScreen() {
 
               {/* Kategorioiden jakauma */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>📊 Kategorioiden jakauma</Text>
+                <Text style={styles.sectionTitle}><Ionicons name="stats-chart" size={24} color={colors.text} /> Kategorioiden jakauma</Text>
                 <Text style={styles.sectionDescription}>
                   Mihin kategorioihin ostoksesi keskittyvät
                 </Text>
@@ -85,7 +86,7 @@ export default function StatisticsScreen() {
                 style={styles.refreshButton} 
                 onPress={refreshStatistics}
               >
-                <Text style={styles.refreshButtonText}>🔄 Päivitä tilastot</Text>
+                <Text style={styles.refreshButtonText}><Ionicons name="refresh" size={20} color={"white"} />  Päivitä tilastot</Text>
               </Pressable>
             </>
           )}
