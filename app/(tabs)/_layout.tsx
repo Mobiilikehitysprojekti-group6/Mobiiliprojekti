@@ -21,7 +21,7 @@ export default function TabsLayout() {
             <Tabs.Screen 
                 name="index"
                 options={{
-                    title: "Oma sivu",
+                    title: "KauppaLappu",
                     tabBarIcon: ({ color }) => <Ionicons name="home" size={24} color={color}/>,
                 }} 
             />
