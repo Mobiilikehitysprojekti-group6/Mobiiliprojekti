@@ -35,13 +35,24 @@ export function useStatisticsViewModel() {
       // Käy läpi kaikki käyttäjän ostoslistat
       for (const listDoc of listsSnapshot.docs) {
         const listId = listDoc.id;
+        const listData = listDoc.data();
+        const categoryMap = new Map<string, string>();
 
-        // Hae kategoriat ja tallenna Map-rakenteeseen tehokkuuden vuoksi
+        // Jos listalla on määritelty kauppa, hae kaupan kategoriat
+        if (listData.storeId) {
+          const storeCategoriesRef = collection(db, `users/${user.uid}/stores/${listData.storeId}/categories`);
+          const storeCategoriesSnapshot = await getDocs(storeCategoriesRef);
+          storeCategoriesSnapshot.docs.forEach(doc => {
+            categoryMap.set(doc.id, doc.data().name || "Ei kategoriaa");
+          });
+        }
+
+        // Hae myös listan omat kategoriat (jos on luotu itse)
         const listCategoryRef = collection(db, `users/${user.uid}/lists/${listId}/categories`);
         const categoriesSnapshot = await getDocs(listCategoryRef);
-        const categoryMap = new Map(
-          categoriesSnapshot.docs.map(doc => [doc.id, doc.data().name || "Ei kategoriaa"])
-        );
+        categoriesSnapshot.docs.forEach(doc => {
+          categoryMap.set(doc.id, doc.data().name || "Ei kategoriaa");
+        });
 
         // Hae listan tuotteet ja laske kategorioittain
         const itemsRef = collection(db, `users/${user.uid}/lists/${listId}/items`);
