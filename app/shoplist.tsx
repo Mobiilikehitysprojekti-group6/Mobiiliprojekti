@@ -46,6 +46,7 @@ export default function ShopListScreen() {
     uid,
     lists,
     getStoreName,
+    getStoreLabel,
     categoriesByScope,
     itemsByListId,
     subscribeCategoriesForList,
@@ -69,8 +70,8 @@ export default function ShopListScreen() {
   )
 
   const storeName = useMemo(
-    () => getStoreName(list?.storeId ?? null),
-    [list?.storeId, getStoreName]
+    () => getStoreLabel(list?.storeId ?? null),
+    [list?.storeId, getStoreLabel, getStoreName]
   )
 
   const listKey = String(listId ?? "")
