@@ -11,7 +11,7 @@ import { useTheme } from "../../src/viewmodels/ThemeContext"
 export default function Home() {
   const { colors } = useTheme()
   const router = useRouter()
-  const { uid, lists, stores, createList, createStore, deleteList, deleteStore, getStoreName, reorderLists } = useShopVM()
+  const { uid, lists, stores, createList, createStore, deleteList, deleteStore, getStoreLabel, getStoreName, reorderLists } = useShopVM()
 
   const styles = createStyles(colors)
 
@@ -30,8 +30,8 @@ export default function Home() {
 
 
   const selectedStoreLabel = useMemo(
-    () => getStoreName(selectedStoreId) ?? "Ei kauppaa",
-    [selectedStoreId, getStoreName]
+    () => getStoreLabel(selectedStoreId) ?? "Ei kauppaa",
+    [selectedStoreId, getStoreLabel, getStoreName]
   )
 
   const openCreateListModal = () => {
@@ -115,7 +115,7 @@ export default function Home() {
           await reorderLists(data.map((x) => x.id))
         }}
         renderItem={({ item, drag, isActive }) => {
-          const storeName = getStoreName(item.storeId) ?? "Ei kauppaa"
+          const storeName = getStoreLabel(item.storeId) ?? "Ei kauppaa"
 
           return (
             <Pressable
