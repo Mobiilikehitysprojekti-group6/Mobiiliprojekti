@@ -6,7 +6,7 @@ import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useShopVM } from "../../src/viewmodels/ShopVMContext"
-import { useTheme } from "../../src/viewmodels/ThemeContext"
+import { useTheme, type ThemeColors } from "../../src/viewmodels/ThemeContext"
 
 export default function Home() {
   const { colors } = useTheme()
@@ -174,7 +174,7 @@ export default function Home() {
                 <TextInput
                   style={styles.input}
                   placeholder="Listan nimi"
-                  placeholderTextColor={colors.secondaryText}
+                  placeholderTextColor={colors.mutedText}
                   value={newListName}
                   onChangeText={setNewListName}
                 />
@@ -250,14 +250,14 @@ export default function Home() {
                   ListEmptyComponent={<Text style={{ color: colors.secondaryText }}>Ei vielä kauppoja.</Text>}
                 />
 
-                <View style={{ height: 1, backgroundColor: colors.secondaryText, marginVertical: 12, opacity: 0.3 }} />
+                <View style={{ height: 1, backgroundColor: colors.divider, marginVertical: 12, opacity: 0.6 }} />
 
                 {/* Lisää uusi kauppa */}
                 <Text style={{ fontWeight: "700", marginBottom: 6, color: colors.text }}>Lisää uusi kauppa</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="Kaupan nimi"
-                  placeholderTextColor={colors.secondaryText}
+                  placeholderTextColor={colors.mutedText}
                   value={newStoreName}
                   onChangeText={setNewStoreName}
                 />
@@ -282,7 +282,7 @@ export default function Home() {
   )
 }
 
-const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background, paddingHorizontal: 16},
     headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
@@ -298,14 +298,14 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     addButtonText: { color: "white", fontSize: 28, fontWeight: "bold", marginTop: -2 },
 
     listBlock: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderRadius: 15,
       padding: 16,
       marginVertical: 8,
       flexDirection: "row",
       alignItems: "center",
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
     },
     listTitle: { fontSize: 18, fontWeight: "900", color: colors.text },
     listSubtitle: { marginTop: 4, color: colors.secondaryText },
@@ -318,31 +318,31 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       justifyContent: "center",
       alignItems: "center",
     },
-    modalContent: { backgroundColor: colors.background, padding: 24, borderRadius: 10, width: "85%" },
+    modalContent: { backgroundColor: colors.surface, padding: 24, borderRadius: 10, width: "85%" },
     modalTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 12, textAlign: "center", color: colors.text },
 
     input: {
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       padding: 10,
       borderRadius: 8,
       marginBottom: 10,
       color: colors.text,
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
     },
     modalButton: { marginLeft: 16, marginTop: 12 },
 
     storePicker: {
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       borderRadius: 10,
       padding: 12,
       flexDirection: "row",
       alignItems: "center",
       marginBottom: 6,
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
     },
-    storeRow: { padding: 12, borderRadius: 10, backgroundColor: colors.background, marginVertical: 6, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.secondaryText },
+    storeRow: { padding: 12, borderRadius: 10, backgroundColor: colors.surface, marginVertical: 6, flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: colors.border },
     trashBtn: { padding: 6, borderRadius: 10, marginLeft: 10 },
 
     stepHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
@@ -351,9 +351,9 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       width: 32,
       height: 32,
       borderRadius: 16,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       alignItems: "center",
       justifyContent: "center",
       marginRight: 8,

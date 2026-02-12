@@ -2,6 +2,7 @@ import React from "react"
 import { View, Text, TextInput, Pressable, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { Category } from "../viewmodels/ShopVMContext"
+import type { ThemeColors } from "../viewmodels/ThemeContext"
 
 type Props = {
   visible: boolean
@@ -21,7 +22,7 @@ type Props = {
   setNewCategoryName: (v: string) => void
 
   // theme + styles parentilta, jotta ulkoasu pysyy identtisenä
-  colors: { background: string; text: string; secondaryText: string; accent: string }
+  colors: ThemeColors
   styles: any
 }
 
@@ -70,9 +71,9 @@ export default function CategoryPickerModal({
           <View
             style={{
               height: 1,
-              backgroundColor: colors.secondaryText,
+              backgroundColor: colors.divider,
               marginVertical: 12,
-              opacity: 0.3,
+              opacity: 0.6,
             }}
           />
 
@@ -86,7 +87,7 @@ export default function CategoryPickerModal({
               <TextInput
                 style={styles.input}
                 placeholder="Uuden kategorian nimi"
-                placeholderTextColor={colors.secondaryText}
+                placeholderTextColor={colors.mutedText}
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
               />

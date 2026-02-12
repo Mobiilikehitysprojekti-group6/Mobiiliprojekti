@@ -14,7 +14,7 @@ import {
 
 import { useMapViewModel } from '../../src/viewmodels/useMapViewModel'
 import { useShopVM } from '../../src/viewmodels/ShopVMContext'
-import { useTheme } from '../../src/viewmodels/ThemeContext'
+import { useTheme, type ThemeColors } from '../../src/viewmodels/ThemeContext'
 
 export default function MapScreen() {
   const { colors } = useTheme()
@@ -61,7 +61,7 @@ export default function MapScreen() {
       <View style={styles.textInput}>
         <TextInput
           placeholder="Hae kauppoja..."
-          placeholderTextColor={colors.secondaryText}
+          placeholderTextColor={colors.mutedText}
           value={searchQuery}
           onChangeText={setSearchQuery}
           style={{ color: colors.text }}
@@ -131,7 +131,7 @@ export default function MapScreen() {
   )
 }
 
-const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     textInput: {
       position: 'absolute',
@@ -139,11 +139,11 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       width: '90%',
       alignSelf: 'center',
       zIndex: 10,
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
       borderRadius: 10,
       padding: 10,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
     },
     floatingCard: {
       position: 'absolute',
@@ -154,7 +154,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     },
     card: {
       width: '92%',
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderRadius: 16,
       padding: 16,
       elevation: 10,
@@ -162,7 +162,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       shadowOpacity: 0.2,
       shadowRadius: 8,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
     },
     storeTitle: {
       fontSize: 18,

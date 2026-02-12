@@ -34,7 +34,15 @@ export function useMapViewModel() {
       }
     )
 
-    const data = await res.json()
+    const raw = await res.text()
+    let data: any
+    try {
+      data = JSON.parse(raw)
+    } catch {
+      setStores([])
+      setError("Kauppojen haku epäonnistui")
+      return
+    }
 
     if (!Array.isArray(data.elements)) {
       console.error("Overpass ei palauttanut elements-arrayta", data)

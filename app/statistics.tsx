@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useStatisticsViewModel } from "../src/viewmodels/useStatisticsViewModel";
-import { useTheme } from "../src/viewmodels/ThemeContext";
+import { useTheme, type ThemeColors } from "../src/viewmodels/ThemeContext";
 
 const BAR_MAX_WIDTH = Dimensions.get('window').width - 100;
 
@@ -97,7 +97,7 @@ export default function StatisticsScreen() {
 }
 
 
-const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -144,12 +144,12 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       color: colors.secondaryText,
     },
     placeholderSection: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       padding: 40,
       borderRadius: 10,
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
     },
     placeholderText: {
       fontSize: 16,

@@ -20,7 +20,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useShopVM } from "../../src/viewmodels/ShopVMContext";
 import { db, doc, setDoc, getDoc } from "../../firebase/Config";
-import { useTheme } from "../../src/viewmodels/ThemeContext";
+import { useTheme, type ThemeColors } from "../../src/viewmodels/ThemeContext";
 
 export default function ProfileScreen() {
   const { colors, mode, toggle } = useTheme();
@@ -188,7 +188,7 @@ export default function ProfileScreen() {
           </Pressable>
 
            <View style={styles.themeRow}>
-            <Text style={styles.themeLabel}>Teema: {mode === "dark" ? "Tumma" : "Vaalea"}</Text>
+            <Text style={styles.themeLabel}>{mode === "dark" ? <Ionicons name="moon" size={20} color={colors.accent} /> : <Ionicons name="sunny" size={20} color={colors.accent} />}</Text>
             <Switch
               value={mode === "dark"}
               onValueChange={toggle}
@@ -228,7 +228,7 @@ export default function ProfileScreen() {
                 ref={inputRef}
                 style={styles.input}
                 placeholder="Käyttäjänimi"
-                placeholderTextColor={colors.secondaryText}
+                placeholderTextColor={colors.mutedText}
                 value={username}
                 onChangeText={setUsername}
               />
@@ -250,7 +250,7 @@ export default function ProfileScreen() {
   );
 }
 
-const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -276,7 +276,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       paddingHorizontal: 20,
     },
     profileCard: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderRadius: 20,
       padding: 20,
       width: '100%',
@@ -302,7 +302,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       width: 120,
       height: 120,
       borderRadius: 60,
-      backgroundColor: colors.secondaryText,
+      backgroundColor: colors.elevated,
       justifyContent: 'center',
       alignItems: 'center',
       marginBottom: 8,
@@ -319,7 +319,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     },
     changePictureText: {
       fontSize: 11,
-      color: colors.secondaryText,
+      color: colors.mutedText,
       textAlign: 'center',
     },
     profileInfo: {
@@ -347,7 +347,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       gap: 10,
       marginBottom: 0,
       marginTop: 10,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       paddingHorizontal: 10,
       paddingVertical: 5,
       borderRadius: 20,
@@ -371,13 +371,13 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     aboutButton: {
       paddingHorizontal: 20,
       paddingVertical: 8,
-      backgroundColor: colors.secondaryText,
+      backgroundColor: colors.accentSoft,
       borderRadius: 15,
       marginTop: 10,
     },
     aboutButtonText: {
       fontSize: 14,
-      color: "white",
+      color: colors.text,
     },
     modalContainer: {
       flex: 1,
@@ -387,12 +387,12 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     },
     modalContent: {
       width: '90%',
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderRadius: 20,
       overflow: 'hidden',
     },
     modalHeader: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       padding: 20,
       alignItems: 'center',
     },
@@ -412,7 +412,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       letterSpacing: 1,
     },
     input: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
       borderRadius: 25,
       paddingHorizontal: 20,
       paddingVertical: 15,
@@ -420,7 +420,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       fontSize: 16,
       color: colors.text,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
     },
     buttonRow: {
       flexDirection: 'row',
@@ -429,7 +429,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     },
     cancelButton: {
       flex: 1,
-      backgroundColor: colors.secondaryText,
+      backgroundColor: colors.elevated,
       borderRadius: 25,
       paddingVertical: 15,
       alignItems: 'center',
