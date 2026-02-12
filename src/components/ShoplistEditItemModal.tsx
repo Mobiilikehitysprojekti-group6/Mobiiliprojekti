@@ -1,6 +1,7 @@
 import React from "react"
 import { View, Text, TextInput, Pressable, Modal } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import type { ThemeColors } from "../viewmodels/ThemeContext"
 
 type Props = {
   visible: boolean
@@ -13,7 +14,7 @@ type Props = {
   editCategoryName: string
   onOpenCategoryPicker: () => void
 
-  colors: { background: string; text: string; secondaryText: string; accent: string }
+  colors: ThemeColors
   styles: any
 }
 
@@ -43,7 +44,7 @@ export default function EditItemModal({
           <TextInput
             style={styles.input}
             placeholder="Tuote"
-            placeholderTextColor={colors.secondaryText}
+            placeholderTextColor={colors.mutedText}
             value={editName}
             onChangeText={setEditName}
           />

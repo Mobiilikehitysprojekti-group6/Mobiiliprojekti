@@ -17,7 +17,7 @@ import {
 } from "react-native-draggable-flatlist"
 
 import { useShopVM, ListItem, Category } from "../src/viewmodels/ShopVMContext"
-import { useTheme } from "../src/viewmodels/ThemeContext"
+import { useTheme, type ThemeColors } from "../src/viewmodels/ThemeContext"
 import EditItemModal from "../src/components/ShoplistEditItemModal"
 import CategoryPickerModal from "../src/components/ShoplistCategoryPickerModal"
 
@@ -271,7 +271,7 @@ export default function ShopListScreen() {
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0, fontWeight: "700" }]}
           placeholder="Tuote"
-          placeholderTextColor={colors.secondaryText}
+          placeholderTextColor={colors.mutedText}
           value={newItemName}
           onChangeText={setNewItemName}
         />
@@ -456,12 +456,7 @@ export default function ShopListScreen() {
   )
 }
 
-const createStyles = (colors: {
-  background: string
-  text: string
-  secondaryText: string
-  accent: string
-}) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: { padding: 20, flex: 1, backgroundColor: colors.background },
 
@@ -471,9 +466,9 @@ const createStyles = (colors: {
       width: 36,
       height: 36,
       borderRadius: 18,
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       alignItems: "center",
       justifyContent: "center",
       marginRight: 10,
@@ -487,11 +482,11 @@ const createStyles = (colors: {
 
     input: {
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       padding: 10,
       borderRadius: 10,
       marginBottom: 10,
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
       height: 44,
       color: colors.text,
     },
@@ -516,9 +511,9 @@ const createStyles = (colors: {
       paddingHorizontal: 10,
       height: 44,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       borderRadius: 10,
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
       width: 120,
       flexShrink: 0,
     },
@@ -557,7 +552,7 @@ const createStyles = (colors: {
       paddingHorizontal: 8,
       paddingVertical: 4,
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       borderRadius: 8,
     },
 
@@ -575,12 +570,12 @@ const createStyles = (colors: {
     },
 
     modalContent: {
-      backgroundColor: colors.background,
+      backgroundColor: colors.surface,
       padding: 24,
       borderRadius: 10,
       width: "85%",
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
     },
 
     modalTitle: {
@@ -597,10 +592,10 @@ const createStyles = (colors: {
 
     categorySelectWide: {
       borderWidth: 1,
-      borderColor: colors.secondaryText,
+      borderColor: colors.border,
       borderRadius: 10,
       padding: 10,
-      backgroundColor: colors.background,
+      backgroundColor: colors.elevated,
       marginBottom: 10,
       gap: 2,
     },
