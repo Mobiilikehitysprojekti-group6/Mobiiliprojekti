@@ -17,11 +17,16 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  getDoc,
+  setDoc,
   getDocs,
   deleteDoc,
   updateDoc,
   doc,
   writeBatch,
+  where,
+  runTransaction,
+  arrayUnion,
 } from "../../firebase/Config"
 
 /*  Data-tyypit: mitä tietoa talletetaan ja näytetään UI:ssa */
@@ -98,6 +103,28 @@ type ItemDoc = {
   createdAt?: unknown
 }
 
+export type SharedList = {
+  id: string
+  name: string
+  ownerId: string
+  memberIds: string[]
+  order: number
+}
+
+type SharedListDoc = {
+  name: string
+  ownerId: string
+  memberIds: string[]
+  order?: number
+  createdAt?: unknown
+}
+
+type InviteDoc = {
+  listId: string
+  createdBy: string
+  createdAt?: unknown
+}
+
 /**
  * Kategoria scope key:
  * - store kategoriat: "store:<storeId>"
@@ -137,6 +164,7 @@ type VM = {
   // Reaaliaikainen data
   stores: Store[] | null
   lists: ShopList[]
+  sharedLists: SharedList[]
 
   // Reaaliaikainen cache shoplist-sivulle
   categoriesByScope: Record<string, Category[]>
@@ -148,6 +176,10 @@ type VM = {
 
   createList: (name: string, storeId: string | null) => Promise<string | null>
   deleteList: (listId: string) => Promise<void>
+
+  createSharedList: (name: string) => Promise<string | null>
+  createInviteCodeForSharedList: (listId: string) => Promise<string | null>
+  joinSharedListByCode: (code: string) => Promise<string | null>
 
   // Kategoria + item API (shoplist käyttää näitä)
   subscribeCategoriesForList: (listId: string, storeId: string | null) => () => void
@@ -162,11 +194,17 @@ type VM = {
     patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order" | "quantity">>
   ) => Promise<void>
   deleteItem: (listId: string, itemId: string) => Promise<void>
+  // Shared items
+  subscribeSharedItems: (listId: string) => () => void
+  addSharedItem: (listId: string, name: string, categoryId: string | null) => Promise<void>
+  updateSharedItem: (listId: string, itemId: string, patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order" | "quantity">>) => Promise<void>
+  deleteSharedItem: (listId: string, itemId: string) => Promise<void>
 
   // Kategorioiden ja itemien drag & drop -järjestelyyn
   reorderCategoriesForList: (listId: string, storeId: string | null, nextIds: string[]) => Promise<void>
   reorderItemsInCategory: (listId: string, categoryId: string | null, nextItemIds: string[]) => Promise<void>
   changeQuantity: (listId: string, itemId: string, delta: number) => Promise<void>
+  changeSharedQuantity: (listId: string, itemId: string, delta: number) => Promise<void>
 
   // etusivun listojen drag & drop -järjestelyyn
   reorderLists: (nextListIds: string[]) => Promise<void>
@@ -195,6 +233,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
   // 2) Data statet
   const [stores, setStores] = useState<Store[]>([])
   const [lists, setLists] = useState<ShopList[]>([])
+  const [sharedLists, setSharedLists] = useState<SharedList[]>([])
 
   // 3) Kategoriat ja itemit tallennetaan stateihin, joissa on scope key
   const [categoriesByScope, setCategoriesByScope] = useState<Record<string, Category[]>>({})
@@ -246,7 +285,6 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
    */
   useEffect(() => {
     if (!uid) return
-
 
     // 2.1) Kaupat: users/{uid}/stores
     const storesRef = collection(db, "users", uid, "stores")
@@ -316,11 +354,40 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       }
     )
 
+    // 2.3) SharedListat: listat, joissa memberId sisältää uid:n
+    const sharedListsRef = collection(db, "lists")
+    const sharedListsQ = query(sharedListsRef, where("memberIds", "array-contains", uid))
+
+    const unsubSharedLists = onSnapshot(sharedListsQ, (snap) => {
+      const next: SharedList[] = snap.docs
+        .map((d) => {
+          const data = d.data() as Partial<SharedListDoc>
+
+          if (typeof data.name !== "string") return null
+          if (typeof data.ownerId !== "string") return null
+          if (!Array.isArray(data.memberIds)) return null
+
+          const memberIds = data.memberIds.filter((x): x is string => typeof x === "string")
+          const order = typeof data.order === "number" ? data.order : 0
+
+          return {
+            id: d.id,
+            name: data.name,
+            ownerId: data.ownerId,
+            memberIds,
+            order,
+          }
+        })
+        .filter((x): x is SharedList => x !== null)
+
+      setSharedLists(next)
+    })
 
     // Cleanup: lopetetaan kuuntelijat kun uid vaihtuu tai Provider unmountataan
     return () => {
       unsubStores()
       unsubLists()
+      unsubSharedLists()
     }
   }, [uid])
 
@@ -450,6 +517,79 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       batch.update(doc(db, "users", uid, "lists", id), { order: idx })
     })
     await batch.commit()
+  }
+
+  // Luo sharetettu lista erikseen Firestoreen "lists"-kokoelmaan, jotta se näkyy kaikille jäsenille
+  const createSharedList = async (name: string) => {
+    if (!uid) return null
+
+    const trimmed = name.trim()
+    if (!trimmed) return null
+
+    const ref = await addDoc(collection(db, "lists"), {
+      name: trimmed,
+      ownerId: uid,
+      memberIds: [uid],
+      order: 0,
+      createdAt: serverTimestamp(),
+    } satisfies SharedListDoc)
+
+    return ref.id
+  }
+
+  // createInviteCodeForSharedList: luo ainutlaatuisen koodin, joka tallennetaan Firestoreen "invites"-kokoelmaan
+  const makeCode = () => Math.random().toString(36).slice(2, 8).toUpperCase()
+
+  const createInviteCodeForSharedList = async (listId: string) => {
+    if (!uid) return null
+
+    for (let i = 0; i < 5; i++) { // yritetään luoda uniikki koodi 5 kertaa
+      const code = makeCode()
+      const inviteRef = doc(db, "invites", code)
+
+      const existing = await getDoc(inviteRef)
+      if (existing.exists()) continue // koodi on jo käytössä, yritä uudella koodilla
+
+      await setDoc(inviteRef, {
+        listId,
+        createdBy: uid,
+        createdAt: serverTimestamp(),
+      } satisfies InviteDoc)
+
+      return code
+    }
+
+    return null // ei onnistunut luomaan uniikkia koodia 5 kertaa
+  }
+
+  // joinSharedListByCode: hakee koodin invite-kokoelmasta, lisää käyttäjän memberiksi listaan ja poistaa inviten
+  const joinSharedListByCode = async (codeRaw: string) => {
+    if (!uid) return null
+
+    const code = codeRaw.trim().toUpperCase()
+    if (!code) return null
+
+    const listId = await runTransaction(db, async (tx) => {
+      const inviteRef = doc(db, "invites", code)
+      const inviteSnap = await tx.get(inviteRef)
+      if (!inviteSnap.exists()) throw new Error("Kutsua ei löydy")
+
+      const invite = inviteSnap.data() as Partial<InviteDoc>
+      if (typeof invite.listId !== "string") throw new Error("Kutsu on virheellinen")
+
+      const listRef = doc(db, "lists", invite.listId)
+      const listSnap = await tx.get(listRef)
+      if (!listSnap.exists()) throw new Error("Listaa ei löydy")
+
+      const list = listSnap.data() as Partial<SharedListDoc>
+      if (!Array.isArray(list.memberIds)) throw new Error("Listan tiedot virheelliset")
+
+      tx.update(listRef, { memberIds: arrayUnion(uid) })
+
+      return invite.listId
+    })
+
+    return listId
   }
 
   /* Kategoriat (elinkaaret) */
@@ -640,7 +780,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
   ) => {
     if (!uid) return
 
-    const out: any = {}
+    const out: Partial<ItemDoc> = {}
     if (patch.name !== undefined) out.name = patch.name
     if (patch.done !== undefined) out.done = patch.done
     if (patch.categoryId !== undefined) out.categoryId = patch.categoryId
@@ -670,6 +810,98 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
     // firebase päivitys
     await updateDoc(doc(db, "users", uid, "lists", listId, "items", itemId), { quantity: next })
+  }
+
+  // Shared items - subscribeSharedItems: shoplist-sivu kutsuu tätä, jotta shared listan itemit saadaan reaaliajassa
+  const subscribeSharedItems = (listId: string) => {
+    const ref = collection(db, "lists", listId, "items")
+    const q = query(ref, orderBy("order", "asc"))
+
+    const unsub = onSnapshot(q, (snap) => {
+      const next: ListItem[] = snap.docs
+        .map((d) => {
+          const data = d.data() as Partial<ItemDoc>
+          if (typeof data.name !== "string") return null
+
+          return {
+            id: d.id,
+            name: data.name,
+            done: !!data.done,
+            categoryId:
+              typeof data.categoryId === "string"
+                ? data.categoryId
+                : data.categoryId === null
+                  ? null
+                  : null,
+            order: typeof data.order === "number" ? data.order : 0,
+            quantity: typeof data.quantity === "number" ? data.quantity : 1,
+          }
+        })
+        .filter((x): x is ListItem => x !== null)
+
+      setItemsByListId((prev) => ({ ...prev, [listId]: next }))
+    })
+
+    return () => {
+      unsub()
+      setItemsByListId((prev) => {
+        const copy = { ...prev }
+        delete copy[listId]
+        return copy
+      })
+    }
+  }
+
+  const addSharedItem = async (listId: string, name: string, categoryId: string | null) => {
+    const trimmed = name.trim()
+    if (!trimmed) return
+
+    const current = itemsByListId[listId] ?? []
+    const maxOrder = current.reduce((m, it) => Math.max(m, it.order), -1)
+    const nextOrder = maxOrder + 1
+
+    await addDoc(collection(db, "lists", listId, "items"), {
+      name: trimmed,
+      done: false,
+      categoryId: categoryId ?? null,
+      order: nextOrder,
+      quantity: 1,
+      createdAt: serverTimestamp(),
+    } satisfies ItemDoc)
+  }
+
+  const updateSharedItem = async (
+    listId: string,
+    itemId: string,
+    patch: Partial<Pick<ListItem, "name" | "done" | "categoryId" | "order" | "quantity">>
+  ) => {
+    const out: Partial<ItemDoc> = {}
+
+    if (patch.name !== undefined) out.name = patch.name
+    if (patch.done !== undefined) out.done = patch.done
+    if (patch.categoryId !== undefined) out.categoryId = patch.categoryId
+    if (patch.order !== undefined) out.order = patch.order
+    if (patch.quantity !== undefined) out.quantity = patch.quantity
+
+    await updateDoc(doc(db, "lists", listId, "items", itemId), out)
+  }
+
+  const deleteSharedItem = async (listId: string, itemId: string) => {
+    await deleteDoc(doc(db, "lists", listId, "items", itemId))
+  }
+
+  const changeSharedQuantity = async (listId: string, itemId: string, delta: number) => {
+  const current = itemsByListId[listId]?.find((i) => i.id === itemId)
+  const next = Math.max(1, (current?.quantity ?? 1) + delta)
+
+  setItemsByListId((prev) => ({
+    ...prev,
+    [listId]: (prev[listId] ?? []).map((it) =>
+      it.id === itemId ? { ...it, quantity: next } : it
+    ),
+  }))
+
+  await updateDoc(doc(db, "lists", listId, "items", itemId), { quantity: next })
   }
 
   const reorderCategoriesForList = async (listId: string, storeId: string | null, nextIds: string[]) => {
@@ -784,11 +1016,20 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       reorderCategoriesForList,
       reorderItemsInCategory,
       changeQuantity,
+      changeSharedQuantity,
       reorderLists,
       getStoreName,
       getStoreLabel,
+      sharedLists,
+      createSharedList,
+      createInviteCodeForSharedList,
+      joinSharedListByCode,
+      subscribeSharedItems,
+      addSharedItem,
+      updateSharedItem,
+      deleteSharedItem,
     }),
-    [user, uid, stores, lists, categoriesByScope, itemsByListId, reorderLists]
+    [user, uid, stores, lists, categoriesByScope, itemsByListId, reorderLists, sharedLists]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
