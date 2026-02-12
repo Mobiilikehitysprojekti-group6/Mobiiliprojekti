@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import MapView, { Marker } from 'react-native-maps'
+import { Ionicons } from '@expo/vector-icons'
 import {
   ActivityIndicator,
   View,
@@ -8,6 +9,7 @@ import {
   TextInput,
   Alert,
   Pressable,
+  Button,
 } from 'react-native'
 
 import { useMapViewModel } from '../../src/viewmodels/useMapViewModel'
@@ -23,6 +25,7 @@ export default function MapScreen() {
     searchQuery,
     setSearchQuery,
     filteredStores,
+    refresh,
   } = useMapViewModel()
 
   const { createStore } = useShopVM()
@@ -32,8 +35,26 @@ export default function MapScreen() {
   const styles = createStyles(colors)
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.accent} />
-  if (error) return <Text style={{ color: colors.text }}>{error}</Text>
-  if (!userLocation) return null
+  if (error) return (
+    <>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>{error}</Text>
+        <Pressable style={styles.errorButton} onPress={refresh}>
+          <Text style={styles.errorButton}><Ionicons name="refresh" size={24} color={"white"} /></Text>
+        </Pressable>
+      </View>
+    </>
+  )
+  if (!userLocation) return (
+    <>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>{error}</Text>
+        <Pressable style={styles.errorButton} onPress={refresh}>
+          <Text style={styles.errorButton}><Ionicons name="refresh" size={24} color={"white"} /></Text>
+        </Pressable>
+      </View>
+    </>
+  )
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -168,4 +189,33 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       textAlign: 'center',
       color: colors.secondaryText,
     },
+    errorTitle: {
+      fontSize: 25,
+      fontWeight: 'bold',
+      color: colors.text,
+      textAlign: 'center',
+      alignItems: 'center',
+      marginBottom: 15,
+      alignContent: 'center',
+    },
+    errorButton: {
+      backgroundColor: colors.accent,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      textAlign: 'center',
+      color: 'white',
+      borderRadius: 30,
+      alignSelf: 'center',
+    },
+    errorContainer: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      backgroundColor: colors.background,
+      zIndex: 10,
+      padding: 10,
+    }
   })
