@@ -119,6 +119,12 @@ export function useMapViewModel() {
         init()
     }, [])
 
+    const refresh = async () => {
+      setLoading(true)
+      setError(null)
+      await init()
+    }
+
     return {
         userLocation,
         stores,
@@ -127,6 +133,7 @@ export function useMapViewModel() {
         filteredStores,
         loading,
         error,
-        refresh: init,
+        init,
+        refresh,
     }
 }
