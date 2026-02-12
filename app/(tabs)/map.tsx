@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import MapView, { Marker } from 'react-native-maps'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import { Ionicons } from '@expo/vector-icons'
 import {
   ActivityIndicator,
@@ -10,14 +10,16 @@ import {
   Alert,
   Pressable,
   Button,
+  Platform,
 } from 'react-native'
 
 import { useMapViewModel } from '../../src/viewmodels/useMapViewModel'
 import { useShopVM } from '../../src/viewmodels/ShopVMContext'
 import { useTheme, type ThemeColors } from '../../src/viewmodels/ThemeContext'
+import { lightDarkMapStyle } from '../../src/models/MapModel'
 
 export default function MapScreen() {
-  const { colors } = useTheme()
+  const { colors, mode } = useTheme()
   const {
     userLocation,
     loading,
@@ -70,6 +72,9 @@ export default function MapScreen() {
 
       <MapView
         style={{ flex: 1 }}
+        mapType="standard"
+        customMapStyle={Platform.OS === "android" && mode === "dark" ? lightDarkMapStyle : []}
+        userInterfaceStyle={Platform.OS === "ios" && mode === "dark" ? "dark" : "light"}
         initialRegion={{
           latitude: userLocation.latitude,
           longitude: userLocation.longitude,
@@ -139,7 +144,7 @@ const createStyles = (colors: ThemeColors) =>
       width: '90%',
       alignSelf: 'center',
       zIndex: 10,
-      backgroundColor: colors.elevated,
+      backgroundColor: colors.surface,
       borderRadius: 10,
       padding: 10,
       borderWidth: 1,
