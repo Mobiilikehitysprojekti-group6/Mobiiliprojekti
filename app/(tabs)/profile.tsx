@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from 'expo-image-picker'; //Kuva valitaan gallerian kautta
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useShopVM } from "../../src/viewmodels/ShopVMContext";
 import { db, doc, setDoc, getDoc } from "../../firebase/Config";
@@ -150,35 +151,37 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>PROFIILI</Text>
-        </View>
-
-        {/* Profile Picture */}
+        {/* Profile Card */}
         <View style={styles.profileSection}>
-          <View style={styles.profilePicture}>
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.profileImage} />
-            ) : (
-              <Text style={styles.profileInitial}>
-                {savedUsername.charAt(0).toUpperCase() || '?'}
-              </Text>
-            )}
+          <View style={styles.profileCard}>
+            <View style={styles.profileRow}>
+              <View style={styles.profilePictureContainer}>
+                <View style={styles.profilePicture}>
+                  {profileImage ? (
+                    <Image source={{ uri: profileImage }} style={styles.profileImage} />
+                  ) : (
+                    <Text style={styles.profileInitial}>
+                      {savedUsername.charAt(0).toUpperCase() || '?'}
+                    </Text>
+                  )}
+                </View>
+                <Pressable onPress={handleChangePicture}>
+                  <Text style={styles.changePictureText}>vaihda kuva</Text>
+                </Pressable>
+              </View>
+
+              <View style={styles.profileInfo}>
+                <View style={styles.usernameRow}>
+                  <Text style={styles.usernameDisplay}>
+                    {savedUsername || 'Ei käyttäjänimeä'}
+                  </Text>
+                  <Pressable style={styles.editIconButton} onPress={handleEdit}>
+                    <Ionicons name="create-outline" size={24} color={colors.accent} />
+                  </Pressable>
+                </View>
+              </View>
+            </View>
           </View>
-          <Pressable onPress={handleChangePicture}>
-            <Text style={styles.changePictureText}>vaihda kuva</Text>
-          </Pressable>
-          
-          <Text style={styles.usernameDisplay}>
-            {savedUsername || 'Ei käyttäjänimeä'}
-          </Text>
-          
-          <Pressable style={styles.editButton} onPress={handleEdit}>
-            <Text style={styles.editButtonText}>
-              {savedUsername ? 'Muokkaa käyttäjänimeä' : 'Lisää käyttäjänimi'}
-            </Text>
-          </Pressable>
           
           <Pressable style={styles.statisticsButton} onPress={() => router.push('/statistics')}>
             <Text style={styles.statisticsButtonText}>Statistiikka</Text>
@@ -270,6 +273,30 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     profileSection: {
       alignItems: 'center',
       paddingVertical: 30,
+      paddingHorizontal: 20,
+    },
+    profileCard: {
+      backgroundColor: colors.background,
+      borderRadius: 20,
+      padding: 20,
+      width: '100%',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 8,
+      elevation: 4,
+      borderWidth: 2,
+      borderColor: colors.accent,
+      marginBottom: 25,
+    },
+    profileRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      width: '100%',
+      paddingHorizontal: 0,
+    },
+    profilePictureContainer: {
+      alignItems: 'center',
     },
     profilePicture: {
       width: 120,
@@ -278,7 +305,7 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       backgroundColor: colors.secondaryText,
       justifyContent: 'center',
       alignItems: 'center',
-      marginBottom: 10,
+      marginBottom: 8,
       overflow: 'hidden',
     },
     profileImage: {
@@ -286,14 +313,33 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
       height: '100%',
     },
     profileInitial: {
-      fontSize: 48,
-      color: colors.text,
+      fontSize: 40,
+      color: '#fff',
       fontWeight: 'bold',
     },
     changePictureText: {
-      fontSize: 12,
+      fontSize: 11,
       color: colors.secondaryText,
-      marginBottom: 15,
+      textAlign: 'center',
+    },
+    profileInfo: {
+      flex: 1,
+      justifyContent: 'flex-start',
+      marginLeft: 25,
+      paddingTop: 40,
+    },
+    usernameRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    usernameDisplay: {
+      fontSize: 22,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    editIconButton: {
+      padding: 4,
     },
     themeRow: {
       flexDirection: 'row',
@@ -309,23 +355,6 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     themeLabel: {
       fontSize: 14,
       color: colors.text,
-    },
-    usernameDisplay: {
-      fontSize: 20,
-      fontWeight: 'bold',
-      color: colors.text,
-      marginBottom: 10,
-    },
-    editButton: {
-      paddingHorizontal: 20,
-      paddingVertical: 8,
-      backgroundColor: colors.accent,
-      borderRadius: 15,
-    },
-    editButtonText: {
-      fontSize: 14,
-      color: '#fff',
-      fontWeight: '600',
     },
     statisticsButton: {
       paddingHorizontal: 20,

@@ -45,6 +45,7 @@ export type ShopList = {
   id: string
   name: string
   storeId: string | null
+  branch?: string // apu storeId:n kanssa, jotta ei tarvitse hakea storea erikseen
   order: number // listojen järjestys etusivulla (drag & drop)
 }
 
@@ -172,6 +173,9 @@ type VM = {
 
   // Helper: storeId -> storeName
   getStoreName: (storeId: string | null) => string | undefined
+
+  //Helper: storeId -> storeName + branch (jos branch löytyy)
+  getStoreLabel: (storeId: string | null) => string | undefined
 }
 
 /*  Context + Provider */
@@ -438,7 +442,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     await deleteDoc(doc(db, "users", uid, "lists", listId))
   }
 
-  // reordeLists: etusivun listojen drag & drop -järjestelyyn, tallennus firestoreen
+  // reorderLists: etusivun listojen drag & drop -järjestelyyn, tallennus firestoreen
   const reorderLists = async (nextListIds: string[]) => {
     if (!uid) return
     const batch = writeBatch(db)
@@ -746,6 +750,13 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     return stores.find((s) => s.id === storeId)?.name
   }
 
+  const getStoreLabel = (storeId: string | null) => {
+    if (!storeId) return undefined
+    const s = stores.find((x) => x.id === storeId)
+    if (!s) return undefined
+    return s.branch ? `${s.name} (${s.branch})` : s.name
+  }
+
   /**
    * useMemo:
    * - palautetaan sama value-olio niin pitkälle kuin mahdollista
@@ -775,6 +786,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       changeQuantity,
       reorderLists,
       getStoreName,
+      getStoreLabel,
     }),
     [user, uid, stores, lists, categoriesByScope, itemsByListId, reorderLists]
   )
