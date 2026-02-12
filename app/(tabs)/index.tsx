@@ -17,7 +17,7 @@ export default function Home() {
 
   // SafeArea + tab bar korkeus
   const tabBarHeight = useBottomTabBarHeight()
-  const listBottomPadding = tabBarHeight + 8
+  const listBottomPadding = tabBarHeight
 
   // Estää dragin kun painetaan roskista
   const blockRowDragRef = useRef(false)
@@ -155,8 +155,7 @@ export default function Home() {
         }
       />
 
-
-      {/* Modal: Uusi lista */}
+      {/* Modal, Uusi lista */}
       <Modal
         visible={modalVisible}
         transparent
