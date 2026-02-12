@@ -13,14 +13,9 @@ export default function Home() {
 
   const styles = createStyles(colors)
 
-  useEffect(() => {
-  console.log("✅ CURRENT UID:", uid)
-  }, [uid])
-
-  useEffect(() => {
-    console.log("📦 lists length:", lists.length)
-  }, [lists.length])
-
+  // SafeArea + tab bar korkeus
+  const tabBarHeight = useBottomTabBarHeight()
+  const listBottomPadding = tabBarHeight
 
   // Estää dragin kun painetaan roskista
   const blockRowDragRef = useRef(false)
@@ -138,7 +133,7 @@ export default function Home() {
                 <Text style={styles.listSubtitle}>{storeName}</Text>
               </View>
 
-              {/* ✅ Roskakori: ei aloita dragia */}
+              {/* Roskakori: ei aloita dragia */}
               <Pressable
                 onPressIn={() => (blockRowDragRef.current = true)}
                 onPressOut={() => (blockRowDragRef.current = false)}
@@ -158,8 +153,7 @@ export default function Home() {
         }
       />
 
-
-      {/* Modal: Uusi lista */}
+      {/* Modal, Uusi lista */}
       <Modal
         visible={modalVisible}
         transparent
