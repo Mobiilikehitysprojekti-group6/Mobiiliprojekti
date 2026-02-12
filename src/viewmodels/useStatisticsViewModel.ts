@@ -8,8 +8,15 @@ export type CategoryStat = {
   percentage: number;
 };
 
+// Suosituimmat tuotteet: nimi ja kuinka monta kertaa esiintyy
+export type PopularProduct = {
+  name: string;
+  count: number;
+};
+
 export function useStatisticsViewModel() {
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [popularProducts, setPopularProducts] = useState<PopularProduct[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [loading, setLoading] = useState(true);
 
@@ -30,6 +37,7 @@ export function useStatisticsViewModel() {
       const listsSnapshot = await getDocs(listsRef);
 
       const categoryCounts: { [key: string]: number } = {};
+      const productCounts: { [key: string]: number } = {};
       let total = 0;
 
       // Käy läpi kaikki käyttäjän ostoslistat
@@ -59,10 +67,16 @@ export function useStatisticsViewModel() {
         const itemsSnapshot = await getDocs(itemsRef);
 
         for (const itemDoc of itemsSnapshot.docs) {
-          const categoryId = itemDoc.data().categoryId;
+          const itemData = itemDoc.data();
+          const categoryId = itemData.categoryId;
           const categoryName = categoryId ? (categoryMap.get(categoryId) || "Ei kategoriaa") : "Ei kategoriaa";
 
           categoryCounts[categoryName] = (categoryCounts[categoryName] || 0) + 1;
+          
+          // Laske tuotefrekvenssi (normalisoi nimi pieniksi kirjaimiksi)
+          const productName = itemData.name?.trim().toLowerCase() || "Nimetön";
+          productCounts[productName] = (productCounts[productName] || 0) + 1;
+          
           total += 1;
         }
       }
@@ -79,6 +93,17 @@ export function useStatisticsViewModel() {
         .sort((a, b) => b.percentage - a.percentage);
 
       setCategoryStats(stats);
+
+      // Suosituimmat tuotteet TOP 10 (frekvenssitaulukko + moodianalyysi)
+      const topProducts: PopularProduct[] = Object.entries(productCounts)
+        .map(([name, count]) => ({
+          name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
+          count,
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      setPopularProducts(topProducts);
     } catch (error) {
       console.error("Virhe tilastojen haussa:", error);
     } finally {
@@ -88,6 +113,7 @@ export function useStatisticsViewModel() {
 
   return {
     categoryStats,
+    popularProducts,
     totalItems,
     loading,
     refreshStatistics: fetchStatistics,

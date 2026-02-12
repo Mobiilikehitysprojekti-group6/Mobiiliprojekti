@@ -9,7 +9,7 @@ import { useTheme, type ThemeColors } from "../src/viewmodels/ThemeContext";
 const BAR_MAX_WIDTH = Dimensions.get('window').width - 100;
 
 export default function StatisticsScreen() {
-  const { categoryStats, totalItems, loading, refreshStatistics } = useStatisticsViewModel();
+  const { categoryStats, popularProducts, totalItems, loading, refreshStatistics } = useStatisticsViewModel();
   const { colors } = useTheme();
   const styles = createStyles(colors);
 
@@ -80,6 +80,48 @@ export default function StatisticsScreen() {
                   </View>
                 ))}
               </View>
+
+              {/* Suosituimmat tuotteet TOP 10 */}
+              {popularProducts.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    <Ionicons name="trophy" size={24} color={colors.accent} /> Suosituimmat tuotteet
+                  </Text>
+                  <Text style={styles.sectionDescription}>
+                    Mitkä tuotteet toistuvat useimmin listoillasi
+                  </Text>
+
+                  {popularProducts.map((product, index) => {
+                    const maxCount = popularProducts[0].count;
+                    const barWidth = (product.count / maxCount) * 100;
+                    
+                    return (
+                      <View key={`${product.name}-${index}`} style={styles.productRow}>
+                        <View style={styles.productHeader}>
+                          <View style={styles.rankBadge}>
+                            <Text style={styles.rankText}>#{index + 1}</Text>
+                          </View>
+                          <Text style={styles.productName}>{product.name}</Text>
+                          <Text style={styles.productCount}>{product.count}x</Text>
+                        </View>
+                        <View style={styles.productBarContainer}>
+                          <View 
+                            style={[
+                              styles.productBar,
+                              { 
+                                width: `${barWidth}%`,
+                                backgroundColor: index === 0 ? colors.accent : 
+                                                index === 1 ? '#5ab8d6' : 
+                                                index === 2 ? '#ffd93d' : colors.secondaryText
+                              }
+                            ]}
+                          />
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
 
               {/* Päivitä-nappi */}
               <Pressable 
@@ -232,6 +274,52 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: 'bold',
       color: colors.text,
       minWidth: 50,
+    },
+    productRow: {
+      marginBottom: 18,
+    },
+    productHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    rankBadge: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.accent,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    rankText: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: '#fff',
+    },
+    productName: {
+      flex: 1,
+      fontSize: 16,
+      fontWeight: '600',
+      color: colors.text,
+    },
+    productCount: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: colors.accent,
+      minWidth: 40,
+      textAlign: 'right',
+    },
+    productBarContainer: {
+      height: 8,
+      backgroundColor: colors.border,
+      borderRadius: 4,
+      overflow: 'hidden',
+      marginLeft: 44,
+    },
+    productBar: {
+      height: '100%',
+      borderRadius: 4,
     },
     refreshButton: {
       backgroundColor: colors.accent,
