@@ -1,33 +1,15 @@
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  Pressable,
-  Alert,
-  useWindowDimensions,
-} from "react-native"
+import { View, Text, TextInput, StyleSheet, Pressable, Alert, useWindowDimensions } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
-import {
-  NestableScrollContainer,
-  NestableDraggableFlatList,
-} from "react-native-draggable-flatlist"
+import { NestableScrollContainer, NestableDraggableFlatList } from "react-native-draggable-flatlist"
 
 import { useShopVM, ListItem, Category } from "../src/viewmodels/ShopVMContext"
 import { useTheme, type ThemeColors } from "../src/viewmodels/ThemeContext"
 import EditItemModal from "../src/components/ShoplistEditItemModal"
 import CategoryPickerModal from "../src/components/ShoplistCategoryPickerModal"
-
-/**
- * ScopeKey kertoo mistä kategoriat haetaan:
- * - jos listalla on kauppa (storeId) => store:<storeId>  (kaupan kategoriat)
- * - jos listalla ei ole kauppaa       => list:<listId>    (listakohtaiset kategoriat)
- */
-const scopeKey = (storeId: string | null, listId: string) =>
-  storeId ? `store:${storeId}` : `list:${listId}`
+import InviteCodeModal from "../src/components/InviteCodeModal"
 
 export default function ShopListScreen() {
   const { colors } = useTheme()
@@ -35,23 +17,18 @@ export default function ShopListScreen() {
   const { listId } = useLocalSearchParams<{ listId: string }>()
   const { width } = useWindowDimensions()
 
-  // Nappien leveydet suhteessa näytön leveyteen (max/min rajoilla)
   const addWidth = Math.max(60, Math.min(78, Math.round(width * 0.13)))
   const catWidth = Math.max(115, Math.min(180, Math.round(width * 0.28)))
 
-  // Estetään drag quantity/roskis/checkbox kohdalta
   const blockRowDragRef = useRef(false)
 
   const {
     uid,
     lists,
-    getStoreName,
-    getStoreLabel,
-    categoriesByScope,
+    categoriesByListId,
     itemsByListId,
     subscribeCategoriesForList,
     createCategoryForList,
-    ensureDefaultStoreCategories,
     subscribeItems,
     addItem,
     updateItem,
@@ -59,62 +36,51 @@ export default function ShopListScreen() {
     reorderCategoriesForList,
     reorderItemsInCategory,
     changeQuantity,
+    createInviteCodeForList,
+    getStoreLabel,
   } = useShopVM()
 
   const styles = createStyles(colors)
 
-  // Listan perustiedot
-  const list = useMemo(
-    () => lists.find((l) => l.id === String(listId)),
-    [lists, listId]
-  )
+  const list = useMemo(() => lists.find((l) => l.id === String(listId)), [lists, listId])
 
-  const storeName = useMemo(
-    () => getStoreLabel(list?.storeId ?? null),
-    [list?.storeId, getStoreLabel, getStoreName]
-  )
+  const title = useMemo(() => {
+    if (!list) return ""
+    const storeName = getStoreLabel(list.storeId)
+    return storeName ? `${list.name} • ${storeName}` : list.name
+  }, [list, getStoreLabel])
 
-  const listKey = String(listId ?? "")
+  const categories: Category[] = categoriesByListId[String(listId)] ?? []
+  const items: ListItem[] = itemsByListId[String(listId)] ?? []
 
-  const catKey = useMemo(() => (list ? scopeKey(list.storeId, list.id) : ""), [list])
-
-  const categories: Category[] = categoriesByScope[catKey] ?? []
-  const items: ListItem[] = itemsByListId[listKey] ?? []
-
-  /* Itemin lisäys UI-state */
+  // UI state
   const [newItemName, setNewItemName] = useState("")
-  const [selectedCategoryId, setSelectedCategoryId] = useState<
-    string | null | undefined
-  >(undefined)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null | undefined>(undefined)
 
-  /* Kategoria dropdown */
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerMode, setPickerMode] = useState<"new" | "edit">("new")
   const [addingCategory, setAddingCategory] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState("")
 
-  /* Edit modal */
   const [editVisible, setEditVisible] = useState(false)
   const [editItem, setEditItem] = useState<ListItem | null>(null)
   const [editName, setEditName] = useState("")
   const [editCategoryId, setEditCategoryId] = useState<string | null>(null)
 
-  // Firestore-kuuntelut
+  // Share modal state
+  const [shareOpen, setShareOpen] = useState(false)
+  const [shareCode, setShareCode] = useState<string | null>(null)
+  const [shareLoading, setShareLoading] = useState(false)
+
   useEffect(() => {
     if (!uid || !list) return
-
     const unsubItems = subscribeItems(list.id)
-    const unsubCats = subscribeCategoriesForList(list.id, list.storeId)
-
-    if (list.storeId) {
-      ensureDefaultStoreCategories(list.storeId)
-    }
-
+    const unsubCats = subscribeCategoriesForList(list.id)
     return () => {
       unsubItems()
       unsubCats()
     }
-  }, [uid, listId, list?.storeId])
+  }, [uid, list?.id])
 
   if (!uid) {
     return (
@@ -135,8 +101,6 @@ export default function ShopListScreen() {
     )
   }
 
-  const title = storeName ? `${list.name} • ${storeName}` : list.name
-
   const selectedCategoryLabel = useMemo(() => {
     if (selectedCategoryId === undefined) return "Kategoria"
     if (selectedCategoryId === null) return "Ei kategoriaa"
@@ -148,16 +112,10 @@ export default function ShopListScreen() {
     return categories.find((c) => c.id === editCategoryId)?.name ?? "Ei kategoriaa"
   }, [editCategoryId, categories])
 
-  type CategoryBlock = {
-    id: string | null
-    name: string
-    order: number
-    items: ListItem[]
-  }
+  type CategoryBlock = { id: string | null; name: string; order: number; items: ListItem[] }
 
   const blocks = useMemo<CategoryBlock[]>(() => {
     const byCat = new Map<string | null, ListItem[]>()
-
     for (const it of items) {
       const key = it.categoryId ?? null
       byCat.set(key, [...(byCat.get(key) ?? []), it])
@@ -176,18 +134,12 @@ export default function ShopListScreen() {
 
     const noCatItems = (byCat.get(null) ?? []).slice().sort((a, b) => a.order - b.order)
     if (noCatItems.length) {
-      catBlocks.push({
-        id: null,
-        name: "Ei kategoriaa",
-        order: 999999,
-        items: noCatItems,
-      })
+      catBlocks.push({ id: null, name: "Ei kategoriaa", order: 999999, items: noCatItems })
     }
 
     return catBlocks
   }, [items, categories])
 
-  // Dropdown auki
   const openPickerForNew = () => {
     setPickerMode("new")
     setAddingCategory(false)
@@ -235,11 +187,7 @@ export default function ShopListScreen() {
     const n = editName.trim()
     if (!n) return
 
-    await updateItem(list.id, editItem.id, {
-      name: n,
-      categoryId: editCategoryId ?? null,
-    })
-
+    await updateItem(list.id, editItem.id, { name: n, categoryId: editCategoryId ?? null })
     setEditVisible(false)
     setEditItem(null)
   }
@@ -247,10 +195,29 @@ export default function ShopListScreen() {
   const createNewCategory = async () => {
     const n = newCategoryName.trim()
     if (!n) return
-
-    await createCategoryForList(list.id, list.storeId, n)
+    await createCategoryForList(list.id, n)
     setNewCategoryName("")
     setAddingCategory(false)
+  }
+
+  const openShareModal = () => {
+    setShareOpen(true)
+  }
+
+  const generateShareCode = async () => {
+    try {
+      setShareLoading(true)
+      const code = await createInviteCodeForList(list.id)
+      if (!code) {
+        Alert.alert("Virhe", "Kutsukoodin luominen epäonnistui.")
+        return
+      }
+      setShareCode(code)
+    } catch {
+      Alert.alert("Virhe", "Kutsukoodin luominen epäonnistui.")
+    } finally {
+      setShareLoading(false)
+    }
   }
 
   return (
@@ -264,9 +231,26 @@ export default function ShopListScreen() {
         <Text style={styles.headerTitle} numberOfLines={2}>
           {title}
         </Text>
+
+        <Pressable
+          onPress={openShareModal}
+          style={{
+            marginLeft: 10,
+            paddingHorizontal: 12,
+            height: 36,
+            borderRadius: 18,
+            borderWidth: 1,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Text style={{ fontWeight: "900", color: colors.text }}>Jaa</Text>
+        </Pressable>
       </View>
 
-      {/* Tehdään row */}
+      {/* Add row */}
       <View style={styles.addRow}>
         <TextInput
           style={[styles.input, { flex: 1, marginBottom: 0, minWidth: 0, fontWeight: "700" }]}
@@ -280,7 +264,8 @@ export default function ShopListScreen() {
           <Text
             style={[
               styles.categoryPillText,
-              !selectedCategoryId && { color: colors.secondaryText, fontWeight: "700" },
+              selectedCategoryId == null && { color: colors.secondaryText, fontWeight: "700" },
+              selectedCategoryId === undefined && { color: colors.secondaryText, fontWeight: "700" },
             ]}
             numberOfLines={1}
           >
@@ -294,28 +279,23 @@ export default function ShopListScreen() {
         </Pressable>
       </View>
 
-      {/* Scroll + drag: NestableScrollContainer scrollaa, listat kasvavat sisällön mukaan */}
-      <NestableScrollContainer
-        style={{ flex: 1 }}
-        nestedScrollEnabled
-        contentContainerStyle={{ paddingBottom: 24 }} 
-      >
+      <NestableScrollContainer style={{ flex: 1 }} nestedScrollEnabled contentContainerStyle={{ paddingBottom: 24 }}>
         <NestableDraggableFlatList
           activationDistance={24}
           data={blocks}
           keyExtractor={(b) => String(b.id ?? "__none__")}
-          scrollEnabled={false} // ulompi EI scrollaa
-          style={{ flexGrow: 0 }} // listan korkeus = sisältö
+          scrollEnabled={false}
+          style={{ flexGrow: 0 }}
           contentContainerStyle={{ paddingBottom: 12 }}
           disableVirtualization
           removeClippedSubviews={false}
           onDragEnd={async ({ data }) => {
             const nextCatIds = data.filter((b) => b.id !== null).map((b) => b.id as string)
-            await reorderCategoriesForList(list.id, list.storeId, nextCatIds)
+            await reorderCategoriesForList(list.id, nextCatIds)
           }}
           renderItem={({ item: block, drag, isActive }) => (
             <View style={{ paddingTop: 10 }}>
-              {/* Kategoria-otsikko */}
+              {/* Category header */}
               <Pressable
                 style={styles.sectionHeaderRow}
                 onLongPress={block.id !== null ? drag : undefined}
@@ -325,25 +305,21 @@ export default function ShopListScreen() {
                 <Text style={styles.sectionTitle}>{block.name}</Text>
               </Pressable>
 
-              {/* Tuotteet kategoriassa */}
+              {/* Items */}
               <NestableDraggableFlatList
                 activationDistance={24}
                 data={block.items}
                 keyExtractor={(it) => it.id}
-                scrollEnabled={false} // sisempi EI scrollaa
-                style={{ flexGrow: 0 }} // tärkeä myös täällä
+                scrollEnabled={false}
+                style={{ flexGrow: 0 }}
                 disableVirtualization
                 removeClippedSubviews={false}
                 onDragEnd={async ({ data }) => {
                   const nextItemIds = data.map((it) => it.id)
                   await reorderItemsInCategory(list.id, block.id, nextItemIds)
                 }}
-                ListEmptyComponent={
-                  <Text style={{ color: colors.secondaryText, marginBottom: 6 }}>(Ei tuotteita)</Text>
-                }
                 renderItem={({ item, drag: dragItem, isActive: itemActive }) => (
                   <View style={[styles.itemRow, itemActive && styles.dragActive]}>
-                    {/* Checkbox: tap = toggle, long press = drag */}
                     <Pressable
                       onPress={() => toggleDone(item)}
                       onLongPress={() => {
@@ -358,7 +334,6 @@ export default function ShopListScreen() {
                       <Text style={{ fontSize: 20, color: colors.text }}>{item.done ? "✔" : "□"}</Text>
                     </Pressable>
 
-                    {/* Nimi: tap = edit, long press = drag */}
                     <Pressable
                       onPress={() => openEdit(item)}
                       onLongPress={() => {
@@ -372,7 +347,6 @@ export default function ShopListScreen() {
                       <Text style={[styles.itemText, item.done && styles.itemDone]}>{item.name}</Text>
                     </Pressable>
 
-                    {/* Quantity stepper: estää dragin */}
                     <View style={styles.qtyWrap}>
                       <Pressable
                         onPressIn={() => (blockRowDragRef.current = true)}
@@ -395,7 +369,6 @@ export default function ShopListScreen() {
                       </Pressable>
                     </View>
 
-                    {/* Roskakori: estää dragin */}
                     <Pressable
                       onPressIn={() => (blockRowDragRef.current = true)}
                       onPressOut={() => (blockRowDragRef.current = false)}
@@ -425,7 +398,7 @@ export default function ShopListScreen() {
         />
       </NestableScrollContainer>
 
-      {/* Kategorian valinta modal (componentsista) */}
+      {/* Category picker */}
       <CategoryPickerModal
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -436,11 +409,9 @@ export default function ShopListScreen() {
         setAddingCategory={setAddingCategory}
         newCategoryName={newCategoryName}
         setNewCategoryName={setNewCategoryName}
-        colors={colors}
-        styles={styles}
       />
 
-      {/* Tuotteen muokkaus modal (componentsista) */}
+      {/* Edit item */}
       <EditItemModal
         visible={editVisible}
         onClose={() => setEditVisible(false)}
@@ -451,6 +422,15 @@ export default function ShopListScreen() {
         onOpenCategoryPicker={openPickerForEdit}
         colors={colors}
         styles={styles}
+      />
+
+      {/* Share modal */}
+      <InviteCodeModal
+        visible={shareOpen}
+        onClose={() => setShareOpen(false)}
+        code={shareCode}
+        loading={shareLoading}
+        onGenerate={generateShareCode}
       />
     </SafeAreaView>
   )
@@ -561,42 +541,4 @@ const createStyles = (colors: ThemeColors) =>
     qtyText: { width: 18, textAlign: "center", fontWeight: "900", color: colors.text },
 
     iconButton: { padding: 6, borderRadius: 10 },
-
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: "rgba(0,0,0,0.3)",
-      justifyContent: "center",
-      alignItems: "center",
-    },
-
-    modalContent: {
-      backgroundColor: colors.surface,
-      padding: 24,
-      borderRadius: 10,
-      width: "85%",
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-
-    modalTitle: {
-      fontSize: 18,
-      fontWeight: "bold",
-      marginBottom: 12,
-      textAlign: "center",
-      color: colors.text,
-    },
-
-    modalButton: { marginLeft: 16, marginTop: 12 },
-
-    pickerRow: { paddingVertical: 10 },
-
-    categorySelectWide: {
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 10,
-      padding: 10,
-      backgroundColor: colors.elevated,
-      marginBottom: 10,
-      gap: 2,
-    },
   })
