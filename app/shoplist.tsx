@@ -72,35 +72,7 @@ export default function ShopListScreen() {
   const [shareCode, setShareCode] = useState<string | null>(null)
   const [shareLoading, setShareLoading] = useState(false)
 
-  useEffect(() => {
-    if (!uid || !list) return
-    const unsubItems = subscribeItems(list.id)
-    const unsubCats = subscribeCategoriesForList(list.id)
-    return () => {
-      unsubItems()
-      unsubCats()
-    }
-  }, [uid, list?.id])
-
-  if (!uid) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ color: colors.secondaryText }}>Kirjaudutaan…</Text>
-      </View>
-    )
-  }
-
-  if (!list) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ fontWeight: "900", color: colors.text }}>Listaa ei löytynyt.</Text>
-        <Pressable onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text style={{ color: colors.accent, fontWeight: "900" }}>Takaisin</Text>
-        </Pressable>
-      </View>
-    )
-  }
-
+  // FIXED: All useMemo hooks MUST be before early returns
   const selectedCategoryLabel = useMemo(() => {
     if (selectedCategoryId === undefined) return "Kategoria"
     if (selectedCategoryId === null) return "Ei kategoriaa"
@@ -139,6 +111,37 @@ export default function ShopListScreen() {
 
     return catBlocks
   }, [items, categories])
+
+  // useEffect must also be before early returns
+  useEffect(() => {
+    if (!uid || !list) return
+    const unsubItems = subscribeItems(list.id)
+    const unsubCats = subscribeCategoriesForList(list.id)
+    return () => {
+      unsubItems()
+      unsubCats()
+    }
+  }, [uid, list?.id])
+
+  // NOW early returns are safe
+  if (!uid) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: colors.secondaryText }}>Kirjaudutaan…</Text>
+      </View>
+    )
+  }
+
+  if (!list) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ fontWeight: "900", color: colors.text }}>Listaa ei löytynyt.</Text>
+        <Pressable onPress={() => router.back()} style={{ marginTop: 12 }}>
+          <Text style={{ color: colors.accent, fontWeight: "900" }}>Takaisin</Text>
+        </Pressable>
+      </View>
+    )
+  }
 
   const openPickerForNew = () => {
     setPickerMode("new")
