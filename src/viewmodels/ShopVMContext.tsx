@@ -160,6 +160,7 @@ type VM = {
 const Ctx = createContext<VM | null>(null)
 
 export function ShopVMProvider({ children }: { children: React.ReactNode }) {
+
   const [user, setUser] = useState<User | null>(null)
   const [uid, setUid] = useState<string | null>(null)
 
@@ -171,6 +172,8 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
   // jotta ei seedailla samaa listaa useasti saman session aikana
   const seededListIdsRef = useRef<Set<string>>(new Set())
+
+  console.log("UID:", uid)
 
   // AUTH
   useEffect(() => {
@@ -220,6 +223,18 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
     // LISTS: /lists where memberIds contains uid
     const listsRef = collection(db, "lists")
     const listsQ = query(listsRef, where("memberIds", "array-contains", uid))
+
+    // DEBUG: testaa query kertahaulla
+    getDocs(listsQ)
+      .then((snapOnce) => {
+        console.log(
+          "DEBUG getDocs lists count:",
+          snapOnce.size,
+          snapOnce.docs.map((d) => d.id)
+        )
+      })
+      .catch((e) => console.error("DEBUG getDocs error:", e))
+
 
     const unsubLists = onSnapshot(
       listsQ,
@@ -434,8 +449,6 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
       if (typeof inv.listId !== "string") throw new Error("Kutsu on virheellinen")
 
       const listRef = doc(db, "lists", inv.listId)
-      const listSnap = await tx.get(listRef)
-      if (!listSnap.exists()) throw new Error("Listaa ei löydy")
 
       tx.update(listRef, {
         memberIds: arrayUnion(uid),
