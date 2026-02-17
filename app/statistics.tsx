@@ -60,11 +60,11 @@ export default function StatisticsScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* ========== OTSIKKOPALKKI ========== */}
         <View style={styles.header}>
-          {/* Takaisin-nappi palauttaa edelliseen näkymään */}
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Takaisin</Text>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backText}>‹</Text>
           </Pressable>
           <Text style={styles.headerTitle}>STATISTIIKKA</Text>
+          <View style={styles.headerSpacer} />
         </View>
 
         {/* ========== PÄÄSISÄLTÖ ========== */}
@@ -242,30 +242,45 @@ const createStyles = (colors: ThemeColors) =>
     header: {
       backgroundColor: colors.background,
       padding: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
     },
-    backButton: {
-      marginBottom: 10,
+    backBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
     },
-    backButtonText: {
-      fontSize: 16,
+    backText: {
+      fontSize: 26,
       color: colors.text,
+      marginTop: -2,
     },
     headerTitle: {
       fontSize: 18,
-      fontWeight: 'bold',
+      fontWeight: '900',
       color: colors.text,
       letterSpacing: 2,
       textAlign: 'center',
+      flex: 1,
+    },
+    headerSpacer: {
+      width: 36,
     },
     content: {
       padding: 20,
     },
     title: {
-      fontSize: 28,
+      fontSize: 24,
       fontWeight: 'bold',
       color: colors.text,
       textAlign: 'center',
-      marginBottom: 30,
+      marginBottom: 24,
     },
     loadingContainer: {
       padding: 40,
@@ -292,9 +307,10 @@ const createStyles = (colors: ThemeColors) =>
     // Yhteenveto-kortti vihreällä taustalla
     summaryCard: {
       backgroundColor: colors.accent,    // Vihreä accent-väri
-      padding: 25,
-      borderRadius: 15,
-      marginBottom: 30,
+      paddingVertical: 10,
+      paddingHorizontal: 18,
+      borderRadius: 12,
+      marginBottom: 25,
       alignItems: 'center',
       shadowColor: '#000',               // Varjo (iOS)
       shadowOffset: { width: 0, height: 2 },
@@ -303,22 +319,22 @@ const createStyles = (colors: ThemeColors) =>
       elevation: 3,                      // Varjo (Android)
     },
     summaryTitle: {
-      fontSize: 16,
+      fontSize: 13,
       color: '#fff',                     // Valkoinen teksti
       opacity: 0.9,
-      marginBottom: 5,
+      marginBottom: 4,
     },
     summaryValue: {
-      fontSize: 48,                      // Iso numero keskellä
+      fontSize: 32,                      // Iso numero keskellä
       fontWeight: 'bold',
       color: '#fff',
-      marginVertical: 5,
+      marginVertical: 3,
     },
     summarySubtitle: {
-      fontSize: 14,
+      fontSize: 12,
       color: '#fff',
       opacity: 0.8,
-      marginTop: 5,
+      marginTop: 3,
     },
     
     // ========== OSIOT ==========
