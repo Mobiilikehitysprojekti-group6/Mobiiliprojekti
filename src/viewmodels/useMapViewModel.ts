@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import * as Location from "expo-location"
 import { Alert } from "react-native"
-import { Store } from "../models/MapModel"
+import { Store, getDistance } from "../models/MapModel"
 
 export function useMapViewModel() {
     const [userLocation, setUserLocation] = useState<Location.LocationObjectCoords | null>(null)
@@ -99,6 +99,35 @@ export function useMapViewModel() {
     })
     }, [stores, searchQuery])
 
+    const closestStore = useMemo(() => {
+      if (!userLocation) return null
+      if (!searchQuery.trim()) return null
+      if (!filteredStores.length) return null
+
+      let closest = filteredStores[0]
+
+      let shortestDistance = getDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        closest.coordinates.latitude,
+        closest.coordinates.longitude
+      )
+
+      for (const store of filteredStores) {
+        const distance = getDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          store.coordinates.latitude,
+          store.coordinates.longitude
+        )
+        if (distance < shortestDistance) {
+          shortestDistance = distance
+          closest = store
+        }
+      }
+      return closest
+    }, [filteredStores, userLocation, searchQuery])
+
 
     const requestLocation = async () => {
         const { status } = await Location.requestForegroundPermissionsAsync()
@@ -139,6 +168,7 @@ export function useMapViewModel() {
         searchQuery,
         setSearchQuery,
         filteredStores,
+        closestStore,
         loading,
         error,
         init,
