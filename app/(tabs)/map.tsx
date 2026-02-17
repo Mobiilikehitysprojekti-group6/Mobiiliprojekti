@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps'
 import { Ionicons } from '@expo/vector-icons'
 import {
@@ -27,14 +27,32 @@ export default function MapScreen() {
     searchQuery,
     setSearchQuery,
     filteredStores,
+    closestStore,
     refresh,
   } = useMapViewModel()
 
   const { createStore } = useShopVM()
 
   const [selectedStore, setSelectedStore] = useState<any>(null)
+  const mapRef = useRef<MapView>(null)
 
   const styles = createStyles(colors)
+
+  useEffect(() => {
+    if (!closestStore || !mapRef.current) return
+
+    mapRef.current.animateToRegion(
+      {
+        latitude: closestStore.coordinates.latitude,
+        longitude: closestStore.coordinates.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      },
+      600 // animaation kesto millisekunteina
+    )
+
+    setSelectedStore(closestStore) // Avaa automaattisesti lähimmän kaupan kortti, kun kartta latautuu
+  }, [closestStore])
 
   if (loading) return <ActivityIndicator style={{ flex: 1 }} color={colors.accent} />
   if (error) return (
@@ -71,6 +89,7 @@ export default function MapScreen() {
       </View>
 
       <MapView
+        ref={mapRef}
         style={{ flex: 1 }}
         mapType="standard"
         customMapStyle={Platform.OS === "android" && mode === "dark" ? lightDarkMapStyle : []}
