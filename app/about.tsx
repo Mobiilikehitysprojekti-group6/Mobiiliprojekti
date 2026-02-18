@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable, Linking } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { useTheme } from "../src/viewmodels/ThemeContext";
+import { useTheme, type ThemeColors } from "../src/viewmodels/ThemeContext";
 
 export default function AboutScreen() {
   const { colors } = useTheme();
@@ -12,8 +12,8 @@ export default function AboutScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => router.back()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Takaisin</Text>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backText}>‹</Text>
           </Pressable>
           <Text style={styles.headerTitle}>TIETOJA SOVELLUKSESTA</Text>
         </View>
@@ -99,7 +99,7 @@ export default function AboutScreen() {
   );
 }
 
-const createStyles = (colors: { background: string; text: string; secondaryText: string; accent: string }) =>
+const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -111,20 +111,32 @@ const createStyles = (colors: { background: string; text: string; secondaryText:
     header: {
       backgroundColor: colors.background,
       padding: 20,
+      flexDirection: 'row',
+      alignItems: 'center',
     },
-    backButton: {
-      marginBottom: 10,
+    backBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginRight: 10,
     },
-    backButtonText: {
-      fontSize: 16,
+    backText: {
+      fontSize: 26,
       color: colors.text,
+      marginTop: -2,
     },
     headerTitle: {
       fontSize: 18,
-      fontWeight: 'bold',
+      fontWeight: '900',
       color: colors.text,
       letterSpacing: 2,
       textAlign: 'center',
+      flex: 1,
     },
     content: {
       padding: 20,

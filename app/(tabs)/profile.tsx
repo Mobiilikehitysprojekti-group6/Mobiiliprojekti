@@ -183,11 +183,7 @@ export default function ProfileScreen() {
             </View>
           </View>
           
-          <Pressable style={styles.statisticsButton} onPress={() => router.push('/statistics')}>
-            <Text style={styles.statisticsButtonText}>Statistiikka</Text>
-          </Pressable>
-
-           <View style={styles.themeRow}>
+          <View style={styles.themeRow}>
             <Text style={styles.themeLabel}>{mode === "dark" ? <Ionicons name="moon" size={20} color={colors.accent} /> : <Ionicons name="sunny" size={20} color={colors.accent} />}</Text>
             <Switch
               value={mode === "dark"}
@@ -196,6 +192,10 @@ export default function ProfileScreen() {
               thumbColor={mode === "dark" ? "white" : "#f4f3f4"}
             />
           </View>
+
+          <Pressable style={styles.statisticsButton} onPress={() => router.push('/statistics')}>
+            <Text style={styles.statisticsButtonText}>Statistiikka</Text>
+          </Pressable>
           
           <Pressable style={styles.aboutButton} onPress={() => router.push('/about')}>
             <Text style={styles.aboutButtonText}>Tietoja sovelluksesta</Text>
@@ -346,11 +346,11 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       gap: 10,
       marginBottom: 0,
-      marginTop: 10,
+      marginTop: 20,
       backgroundColor: colors.surface,
       paddingHorizontal: 10,
       paddingVertical: 5,
-      borderRadius: 20,
+      borderRadius: 10,
     },
     themeLabel: {
       fontSize: 14,
@@ -360,8 +360,8 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 20,
       paddingVertical: 8,
       backgroundColor: colors.accent,
-      borderRadius: 15,
-      marginTop: 10,
+      borderRadius: 10,
+      marginTop: 20,
     },
     statisticsButtonText: {
       fontSize: 14,
@@ -372,8 +372,8 @@ const createStyles = (colors: ThemeColors) =>
       paddingHorizontal: 20,
       paddingVertical: 8,
       backgroundColor: colors.accentSoft,
-      borderRadius: 15,
-      marginTop: 10,
+      borderRadius: 10,
+      marginTop: 20,
     },
     aboutButtonText: {
       fontSize: 14,
