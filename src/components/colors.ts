@@ -27,12 +27,12 @@ export const lightColors = {
 
 export const darkColors = {
   // Background layers
-  background: '#121212',        // oikea dark-mode musta
+  background: '#181818',        // oikea dark-mode musta
   surface: '#1E1E1E',           // kortit
   elevated: '#2A2A2A',          // inputit, korotetut elementit
 
   // Tab & navigation
-  tabBackground: '#1A1A1A',
+  tabBackground: '#282828',
   tabInactive: '#888888',
 
   // Text
