@@ -172,7 +172,7 @@ export const firebaseConfig = {
 ---
 
 ## UI-suunnitelma
-![UI-suunnitelma](/Documents/FigmaUI.png)
+![UI-suunnitelma](/Documents/FigmaUIsuunnitelma.png)
 
 ## Datamalli (luonnos)
 
