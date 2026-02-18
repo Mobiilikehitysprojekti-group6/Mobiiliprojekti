@@ -173,6 +173,12 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
   // jotta ei seedailla samaa listaa useasti saman session aikana
   const seededListIdsRef = useRef<Set<string>>(new Set())
 
+  const dedupeLists = (arr: ShopList[]) => {
+    const m = new Map<string, ShopList>()
+    for (const l of arr) m.set(l.id, l)
+    return Array.from(m.values())
+}
+
   console.log("UID:", uid)
 
   // AUTH
@@ -268,7 +274,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
           .filter((x): x is ShopList => x !== null)
           .sort((a, b) => a.order - b.order)
 
-        setLists(next)
+        setLists(dedupeLists(next))
       },
       (err) => console.error("Lists onSnapshot error:", err)
     )
@@ -342,7 +348,7 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
 
     // lisätään lista heti lokaalisti, ettei /shoplist ehdi näyttää "ei löydy"
     setLists((prev) => {
-      const next = [
+      const merged = dedupeLists([
         ...prev,
         {
           id: ref.id,
@@ -352,8 +358,8 @@ export function ShopVMProvider({ children }: { children: React.ReactNode }) {
           ownerId: uid,
           memberIds: [uid],
         },
-      ]
-      return next.sort((a, b) => a.order - b.order)
+      ])
+      return merged.sort((a, b) => a.order - b.order)
     })
 
     await ensureDefaultListCategories(ref.id)
