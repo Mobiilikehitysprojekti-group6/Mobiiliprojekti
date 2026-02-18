@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { useBottomTabBarHeight } from "@react-navigation/bottom-tabs"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { useShopVM } from "../../src/viewmodels/ShopVMContext"
 import { useTheme, type ThemeColors } from "../../src/viewmodels/ThemeContext"
@@ -14,6 +15,7 @@ export default function Home() {
   const { colors } = useTheme()
   const styles = createStyles(colors)
   const router = useRouter()
+  const insets = useSafeAreaInsets()
 
   const {
     uid,
@@ -124,7 +126,8 @@ export default function Home() {
         data={lists}
         keyExtractor={(l) => l.id}
         activationDistance={8}
-        contentContainerStyle={{ paddingBottom: tabBarHeight }}
+        contentContainerStyle={{ paddingBottom: tabBarHeight + insets.bottom + 16 }}
+        showsVerticalScrollIndicator
         onDragEnd={async ({ data }) => {
           await reorderLists(data.map((x) => x.id))
         }}
