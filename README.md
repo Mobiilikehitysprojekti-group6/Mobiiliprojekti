@@ -174,43 +174,47 @@ export const firebaseConfig = {
 ## UI-suunnitelma
 ![UI-suunnitelma](/Documents/FigmaUIsuunnitelma.png)
 
-## Datamalli (luonnos)
+## Datamalli
 
 ### Firestore-rakenne
 
-```
 users/
-  {userId}/
-    - email: string
-    - displayName: string
-    - createdAt: timestamp
-
-groups/
-  {groupId}/
-    - name: string
-    - ownerId: string
-    - members: string[] (user IDs)
-    - createdAt: timestamp
-    
-    shoppingLists/
-      {listId}/
-        - name: string (esim. "Prisma Keskusta")
-        - storeName?: string
+  {uid}/
+    - username?: string
+    - profileImage?: string
+    stores/
+      {storeId}/
+        - name: string
+        - branch?: string | null
         - createdAt: timestamp
-        - updatedAt: timestamp
-        
-        categories/
-          {categoryId}/
-            - name: string (esim. "Hedelmät")
-            - order: number
-            
-            items/
-              {itemId}/
-                - name: string
-                - quantity?: string
-                - checked: boolean
-                - addedBy: string (userId)
-                - createdAt: timestamp
+
+lists/
+  {listId}/
+    - name: string
+    - storeId: string | null
+    - ownerId: string
+    - memberIds: string[]
+    - orderBy: { [uid: string]: number }
+    - createdAt: timestamp
+    categories/
+      {categoryId}/
+        - name: string
+        - order: number
+        - createdAt: timestamp
+    items/
+      {itemId}/
+        - name: string
+        - done: boolean
+        - categoryId: string | null
+        - order: number
+        - quantity: number
+        - createdAt: timestamp
+
+invites/
+  {CODE}/
+    - listId: string
+    - createdBy: string
+    - createdAt: timestamp
 ```
 
 ### Tärkeät huomiot
@@ -262,6 +266,7 @@ groups/
 - **Testaus**: Manuaalinen testaus, testaussuunnitelma
 
   https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV
+
 
 
 
