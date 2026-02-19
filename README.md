@@ -1,6 +1,6 @@
-# KauppaLappu (React Native) — Perheille, pariskunnille ja yhdessä ostaville
+# KauppaLappu (React Native) — yksilöille, perheille, pariskunnille ja yhdessä ostaville
 
-Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostaville suunnattu mobiilisovellus, joka helpottaa arjen ostosten suunnittelua ja tekemistä. Sovelluksessa käyttäjät toimivat **ryhmissä**, joissa voidaan ylläpitää **reaaliaikaisesti päivittyviä kauppalappuja** eri kaupoille. Tuotteet lisätään **tuotekategorioittain**, ja kategorioita voi järjestää “fyysisen lapun” tapaan. Tarvittaessa sovellus voi hakea **lähimmän halutun kaupan** puhelimen GPS-sijainnin perusteella.
+Kauppalappu on suomenkielisille yksilöille, perheille, pariskunnille ja yhdessä ostaville suunnattu mobiilisovellus, joka helpottaa arjen ostosten suunnittelua ja tekemistä. Sovelluksessa käyttäjät toimivat **yksilöinä tai ryhmissä**, joissa voidaan ylläpitää **reaaliaikaisesti päivittyviä kauppalappuja** eri kaupoille. Tuotteet lisätään **tuotekategorioittain**, ja kategorioita voi järjestää “fyysisen lapun” tapaan. Tarvittaessa sovellus voi hakea **lähimmän halutun kaupan** puhelimen GPS-sijainnin perusteella.
 
 > Kohdemarkkina: Suomi  
 > Teknologia: React Native (cross-platform: iOS + Android)
@@ -265,6 +265,7 @@ invites/
 *Ryhmä 6 - Mobiilikehitysprojekti*
 
 [Demo-video](https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV)
+
 
 
 
