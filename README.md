@@ -24,9 +24,8 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 ## Ominaisuudet
 
 ### 1) Ryhmät ja yhteiskäyttö
-- Ryhmän luonti / liittyminen (esim. kutsulinkki tai koodi) *(tätä muokataan vielä)*
+- Kauppalistan jako kutsukoodilla
 - Ryhmän jäsenet näkevät samat kauppalistat
-- Roolit (esim. owner/member) *(mahdollisesti?)*
 
 ### 2) Useat kauppalistat eri kaupoille
 - Käyttäjä voi luoda useita kauppalappuja ja halutessaan liittää niihin kaupan (“Prisma”, “K-Citymarket”, “Lidl”)
@@ -41,17 +40,14 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 
 ### 4) Reaaliaikainen päivittyminen
 - Kun yksi käyttäjä lisää/muokkaa/poistaa, muut näkevät muutokset reaaliajassa
-- Konfliktien minimointi (last-write-wins tms.) *(selvitetään)*
 
 ### 5) GPS: lähimmän halutun kaupan haku
 - “Etsi lähin kauppa” -toiminto sijainnin perusteella
-- Valittavissa kauppaketju / kauppatyyppi *(selvitetään)*
 - Tarkistetaan GPS-signaalin käyttölupa ja avataan reitti karttasovellukseen
 
 ### 6) Offline-tuki (MVP+)
-- Sovellus näyttää **viimeisimmän synkatun** kauppalapun, vaikka internet-yhteys katkeaa
-- Käyttöliittymä näyttää yhteyden/synkkauksen tilan: **Synkattu / Synkronoidaan / Offline** *(selvitetään)*
-- *(Valinnainen laajennus)* Offline-muutokset jonoutetaan ja synkataan automaattisesti, kun yhteys palautuu
+- Data näkyy offline-tilassa (Firestore)
+- Auth säilyy (AsyncStorage)
 
 ### 7) Perustoiminnot (CRUD)
 - Luo / lue / päivitä / poista:
@@ -66,19 +62,19 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 
 | Vaatimus (muokkaa) | Miten toteutuu tässä projektissa | Missä näkyy / esimerkki |
 |---|---|---|
-| Cross-platform mobiilisovellus | React Native (iOS + Android samasta koodista) | `/apps/mobile` tai projektin root |
-| Käyttäjien yhteiskäyttö / ryhmätoiminnallisuus | Ryhmät, yhteiset listat | Ryhmänäkymä + jäsenlista |
+| Cross-platform mobiilisovellus | React Native (iOS + Android samasta koodista) | `Mobiiliprojekti/` projektin root-taso |
+| Käyttäjien yhteiskäyttö / ryhmätoiminnallisuus | Ryhmät, yhteiset listat reaaliajassa | Kutsukoodilla liittyminen, listat näkyvät kaikille ryhmän jäsenille |
 | Reaaliaikaisuus | Listojen synkronointi reaaliaikaisesti (esim. Firestore/Supabase) | “muutos näkyy heti” demo |
 | CRUD-toiminnot | Listat, kategoriat, tuotteet | Lisää/Muokkaa/Poista -toiminnot |
 | Selkeä UI/UX ja käytettävyys | Kategoriat, nopea lisäys, selkeä listaus | Kotinäkymä + listanäkymä |
 | Laitteen ominaisuuden hyödyntäminen | GPS-sijainti “lähin kauppa” -hakuun | Sijaintilupa + hakutoiminto |
-| Toimii heikossa verkossa / offline | Näyttää viimeisimmän synkatun datan offline-tilassa (välimuisti) | Demo: katkaise netti → lista näkyy edelleen |
+| Toimii heikossa verkossa / offline | Firestore välimuisti + AsyncStorage: data näkyvissä offline-tilassa | Demo: katkaise netti → lista näkyy, muutokset synkataan kun yhteys palautuu |
 | Tietosuoja huomioitu | Sijaintia käytetään vain pyydettäessä, minimidatan periaate | Tietosuojasivu + lupatekstit |
 | Dokumentointi | README + (valinnainen) arkkitehtuuri/diagr. | Tämä README |
 | Versiohallinta ja työnjako | Git, branchit, PR:t, issue-tracking | GitHub/GitLab |
 
 ### Käyttötapaus-esimerkki (User Story)
-**Käyttäjänä** haluan lisätä tuotteita yhteiseen kauppalistaan, **jotta** perhe näkee reaaliajassa mitä pitää ostaa.
+**Käyttäjänä** haluan lisätä tuotteita yhteiseen kauppalistaan, **jotta** ryhmän jäsen näkee reaaliajassa mitä pitää ostaa.
 
 **Hyväksymiskriteerit**
 - Kun lisään tuotteen, se ilmestyy välittömästi myös toiselle käyttäjälle.
@@ -93,9 +89,13 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 - React Native (cross-platform)
 - Expo
 - TypeScript
-- Reaaliaikainen backend: Firebase Firestore
+- Reaaliaikainen backend: Firebase Firestore + Authentication
 - Kartta/paikkatieto: Expo Location + Overpass API
-- 
+- Tilastot: react-native-chart-kit (piirakka- ja pylväskaaviot)
+- UI-komponentit: react-native-draggable-flatlist, react-native-gesture-handler, react-native-reanimated
+- Paikallinen tallennus: @react-native-async-storage/async-storage (offline + auth persistence)
+- Kuvagalleria: expo-image-picker
+- Teemoitus: Dark Mode / Light Mode (custom ThemeContext)
 ---
 
 ## Käyttöönotto
@@ -233,11 +233,6 @@ groups/
 2. Lisää/muokkaa/poista tuotteita yhdellä laitteella
 3. Varmista että muutokset näkyvät välittömästi toisella laitteella
 
-### Testauskattavuus
-*(Täydennetään myöhemmin kun automatisoidut testit on toteutettu)*
-- Unit-testit: Jest + React Native Testing Library
-- E2E-testit: Detox tai Maestro *(suunnitteilla)*
-
 ---
 
 ## Roadmap
@@ -249,13 +244,9 @@ groups/
 - ✅ Kategoriat ja tuotteet
 - ✅ Reaaliaikainen synkronointi
 - ✅ Perus-UI/UX
-
-### Lähitulevaisuus
-- 🔄 Tuotehistoria ja usein ostetut tuotteet
-- 🔄 Dark Mode
-- 🔄 Drag & drop kategorioiden järjestelyyn
-- 🔄 Push-notifikaatiot ryhmän jäsenille
-- 🔄 Ostoshistorian analytiikka ja tilastot
+- ✅ Dark Mode / Light Mode
+- ✅ Drag & drop kategorioiden järjestelyyn
+- ✅ Ostoshistorian analytiikka ja tilastot
 
 ---
 
@@ -269,6 +260,7 @@ groups/
 - **Backend/Firebase**: Firestore-rakenne, autentikointi, reaaliaikaisuus
 - **Kartta/GPS**: Expo Location, Overpass API -integraatio
 - **Testaus**: Manuaalinen testaus, testaussuunnitelma
+
 
 
 
