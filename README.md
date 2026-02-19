@@ -270,5 +270,8 @@ groups/
 - **Kartta/GPS**: Expo Location, Overpass API -integraatio
 - **Testaus**: Manuaalinen testaus, testaussuunnitelma
 
+  https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV
+
+
 
 
