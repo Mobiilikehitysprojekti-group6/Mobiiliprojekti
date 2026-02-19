@@ -182,6 +182,7 @@ users/
   {uid}/
     - username?: string
     - profileImage?: string
+
     stores/
       {storeId}/
         - name: string
@@ -196,11 +197,13 @@ lists/
     - memberIds: string[]
     - orderBy: { [uid: string]: number }
     - createdAt: timestamp
+
     categories/
       {categoryId}/
         - name: string
         - order: number
         - createdAt: timestamp
+
     items/
       {itemId}/
         - name: string
@@ -266,6 +269,7 @@ invites/
 - **Testaus**: Manuaalinen testaus, testaussuunnitelma
 
   https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV
+
 
 
 
