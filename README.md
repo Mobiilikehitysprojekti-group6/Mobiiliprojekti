@@ -14,10 +14,10 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 - [Käyttöönotto](#käyttöönotto)
 - [Ympäristömuuttujat](#ympäristömuuttujat)
 - [Luvat ja tietosuoja](#luvat-ja-tietosuoja)
-- [Datamalli (luonnos)](#datamalli-luonnos)
+- [Datamalli (luonnos)](#datamalli)
 - [Testaus](#testaus)
 - [Roadmap](#roadmap)
-- [Tiimi & työnjako](#tiimi--työnjako)
+- [Tiimi](#tiimi)
 
 ---
 
@@ -55,10 +55,10 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
   - kategoriat
   - tuotteet
 - Huomioidaan subcollectionsien poistaminen Firebase/Firestoresta
+
 ---
 
 ## Projektin vaatimukset ja miten ne täyttyvät
-
 
 | Vaatimus (muokkaa) | Miten toteutuu tässä projektissa | Missä näkyy / esimerkki |
 |---|---|---|
@@ -96,6 +96,7 @@ Kauppalappu on Suomessa toimiville perheille, pariskunnille ja yhdessä ostavill
 - Paikallinen tallennus: @react-native-async-storage/async-storage (offline + auth persistence)
 - Kuvagalleria: expo-image-picker
 - Teemoitus: Dark Mode / Light Mode (custom ThemeContext)
+
 ---
 
 ## Käyttöönotto
@@ -178,8 +179,9 @@ export const firebaseConfig = {
 
 ### Firestore-rakenne
 
-    users/
-    {uid}/
+```text
+users/
+  {uid}/
     - username?: string
     - profileImage?: string
 
@@ -189,8 +191,8 @@ export const firebaseConfig = {
         - branch?: string | null
         - createdAt: timestamp
 
-    lists/
-    {listId}/
+lists/
+  {listId}/
     - name: string
     - storeId: string | null
     - ownerId: string
@@ -213,8 +215,8 @@ export const firebaseConfig = {
         - quantity: number
         - createdAt: timestamp
 
-    invites/
-     {CODE}/
+invites/
+  {CODE}/
     - listId: string
     - createdBy: string
     - createdAt: timestamp
@@ -257,18 +259,13 @@ export const firebaseConfig = {
 
 ---
 
-## Tiimi & työnjako
+## Tiimi
 
 ### Tiimi
 *Ryhmä 6 - Mobiilikehitysprojekti*
 
-### Työnjako
-- **Frontend/UI**: React Native -komponentit, navigointi, käyttöliittymä
-- **Backend/Firebase**: Firestore-rakenne, autentikointi, reaaliaikaisuus
-- **Kartta/GPS**: Expo Location, Overpass API -integraatio
-- **Testaus**: Manuaalinen testaus, testaussuunnitelma
+[Demo-video](https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV)
 
-  https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV
 
 
 
