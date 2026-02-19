@@ -178,8 +178,8 @@ export const firebaseConfig = {
 
 ### Firestore-rakenne
 
-users/
-  {uid}/
+    users/
+    {uid}/
     - username?: string
     - profileImage?: string
 
@@ -189,8 +189,8 @@ users/
         - branch?: string | null
         - createdAt: timestamp
 
-lists/
-  {listId}/
+    lists/
+    {listId}/
     - name: string
     - storeId: string | null
     - ownerId: string
@@ -213,8 +213,8 @@ lists/
         - quantity: number
         - createdAt: timestamp
 
-invites/
-  {CODE}/
+    invites/
+     {CODE}/
     - listId: string
     - createdBy: string
     - createdAt: timestamp
@@ -269,6 +269,7 @@ invites/
 - **Testaus**: Manuaalinen testaus, testaussuunnitelma
 
   https://youtu.be/T30AL6ffF4w?si=i5GQLXFKsJ__F7bV
+
 
 
 
