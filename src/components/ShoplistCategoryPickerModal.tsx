@@ -53,23 +53,35 @@ export default function CategoryPickerModal({
             </Pressable>
           </View>
 
-          {/* Scrollattava lista kategorioille */}
-          <ScrollView
-            style={styles.scrollArea}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {categories.map((c) => (
-              <Pressable key={c.id} onPress={() => onPickCategory(c.id)} style={styles.pickerRow}>
-                <Text style={styles.categoryText}>{c.name}</Text>
+          {/* Kategorioiden lista (selkeä laatikko + scroll) */}
+          <View style={[styles.listBox, { borderColor: colors.border, backgroundColor: colors.elevated }]}>
+            <ScrollView
+              style={styles.scrollArea}
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator
+              persistentScrollbar
+            >
+              {/* Ei kategoriaa ensin */}
+              <Pressable onPress={() => onPickCategory(null)} style={styles.pickerRow}>
+                <Text style={styles.noCategoryText}>Ei kategoriaa</Text>
               </Pressable>
-            ))}
-          </ScrollView>
 
-          {/* Ei kategoriaa */}
-          <Pressable onPress={() => onPickCategory(null)} style={styles.pickerRow}>
-            <Text style={styles.noCategoryText}>Ei kategoriaa</Text>
-          </Pressable>
+              <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+
+              {categories.map((c, idx) => (
+                <React.Fragment key={c.id}>
+                  <Pressable onPress={() => onPickCategory(c.id)} style={styles.pickerRow}>
+                    <Text style={styles.categoryText}>{c.name}</Text>
+                  </Pressable>
+
+                  {/* divider jokaisen rivin jälkeen, paitsi viimeisen */}
+                  {idx !== categories.length - 1 && (
+                    <View style={[styles.rowDivider, { backgroundColor: colors.divider }]} />
+                  )}
+                </React.Fragment>
+              ))}
+            </ScrollView>
+          </View>
 
           <View style={[styles.divider, { backgroundColor: colors.divider }]} />
 
@@ -127,15 +139,28 @@ const createStyles = (colors: ThemeColors) =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
+      marginBottom: 12,
     },
 
     modalTitle: {
       fontSize: 18,
       fontWeight: "bold",
-      marginBottom: 12,
       textAlign: "center",
       color: colors.text,
       flex: 1,
+    },
+
+    listBox: {
+      borderWidth: 1,
+      borderRadius: 12,
+      padding: 6,
+      marginBottom: 2,
+    },
+
+    rowDivider: {
+      height: 1,
+      opacity: 0.6,
+      marginHorizontal: 6,
     },
 
     // Scroll-alue vain kategorioille
@@ -149,7 +174,9 @@ const createStyles = (colors: ThemeColors) =>
     },
 
     pickerRow: {
-      paddingVertical: 10,
+      paddingVertical: 12,
+      paddingHorizontal: 10,
+      borderRadius: 10,
     },
 
     categoryText: {

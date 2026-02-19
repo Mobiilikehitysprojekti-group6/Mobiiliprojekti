@@ -1,5 +1,5 @@
 import React from "react"
-import { View, Text, TextInput, Pressable, Modal } from "react-native"
+import { View, Text, TextInput, Pressable, Modal, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import type { ThemeColors } from "../viewmodels/ThemeContext"
 
@@ -37,12 +37,12 @@ export default function EditItemModal({
       presentationStyle="overFullScreen"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Muokkaa tuotetta</Text>
+      <View style={modalStyles.overlay}>
+        <View style={[modalStyles.content, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <Text style={[modalStyles.title, { color: colors.text }]}>Muokkaa tuotetta</Text>
 
           <TextInput
-            style={styles.input}
+            style={[styles.input]}
             placeholder="Tuote"
             placeholderTextColor={colors.mutedText}
             value={editName}
@@ -50,7 +50,10 @@ export default function EditItemModal({
           />
 
           {/* Editissä käytetään samaa kategoriapickeriä */}
-          <Pressable onPress={onOpenCategoryPicker} style={styles.categorySelectWide}>
+          <Pressable onPress={onOpenCategoryPicker} style={[
+            modalStyles.categorySelectWide,
+            { borderColor: colors.border, backgroundColor: colors.elevated },
+          ]}>
             <Text style={{ color: colors.secondaryText }}>Kategoria</Text>
             <Text style={{ fontWeight: "900", color: colors.text }} numberOfLines={1}>
               {editCategoryName}
@@ -59,10 +62,10 @@ export default function EditItemModal({
           </Pressable>
 
           <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-            <Pressable onPress={onClose} style={styles.modalButton}>
+            <Pressable onPress={onClose} style={[modalStyles.button, { borderColor: colors.border, backgroundColor: colors.elevated }]}>
               <Text style={{ color: colors.text }}>Peruuta</Text>
             </Pressable>
-            <Pressable onPress={onSave} style={styles.modalButton}>
+            <Pressable onPress={onSave} style={[modalStyles.button, { borderColor: colors.border, backgroundColor: colors.elevated }]}>
               <Text style={{ fontWeight: "900", color: colors.text }}>Tallenna</Text>
             </Pressable>
           </View>
@@ -71,3 +74,38 @@ export default function EditItemModal({
     </Modal>
   )
 }
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    padding: 18,
+  },
+  content: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 10,
+  },
+  button: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginLeft: 10,
+  },
+  categorySelectWide: {
+    marginTop: 10,
+    marginBottom: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+})
+
