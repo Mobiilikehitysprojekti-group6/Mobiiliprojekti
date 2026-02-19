@@ -1,4 +1,4 @@
-app/            → Navigation and screens (file-based routing)
+app/            → Navigation and screens
 
 src/components/ → Reusable UI components
 
