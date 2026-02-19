@@ -37,6 +37,8 @@ export default function AboutScreen() {
             <Text style={styles.text}>• Järjestä ostokset kauppojen mukaan</Text>
             <Text style={styles.text}>• Lisää tuotteita nopeasti</Text>
             <Text style={styles.text}>• Profiilikuva ja käyttäjänimi</Text>
+            <Text style={styles.text}>• Jaa listoja muille käyttäjille</Text>
+            <Text style={styles.text}>• Statistiikka ostoshistoriasta</Text>
             <Text style={styles.text}>• Karttanäkymä kauppojen löytämiseen</Text>
           </View>
 
@@ -76,6 +78,11 @@ export default function AboutScreen() {
             <Text style={styles.text}>• Firebase (Apache 2.0)</Text>
             <Text style={styles.text}>• React Native Maps (MIT License)</Text>
             <Text style={styles.text}>• expo-image-picker (MIT License)</Text>
+            <Text style={styles.text}>• react-native-chart-kit (MIT) — piirakkadiagrammi</Text>
+            <Text style={styles.text}>• react-native-draggable-flatlist (MIT) — drag & drop</Text>
+            <Text style={styles.text}>• @react-native-async-storage/async-storage (MIT) — välimuist</Text>
+            <Text style={styles.text}>• expo-clipboard (MIT) — kopiointitoiminto</Text>
+            <Text style={styles.text}>• TypeScript (Apache 2.0)</Text>
           </View>
 
           <View style={styles.section}>
