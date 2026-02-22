@@ -9,7 +9,6 @@ import {
   TextInput,
   Alert,
   Pressable,
-  Button,
   Platform,
 } from 'react-native'
 
